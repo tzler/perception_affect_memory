@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 
-<! https://www.jspsych.org/tutorials/rt-task/ > 
-
 <html>
   <head>
     <title>Auditory experiment</title>
@@ -14,9 +12,49 @@
   </head>
   <body></body>
   <script>
+    
+    /* EXPERIMENTAL PARAMETERS */ 
+    var bonus_amount = 0.02
+    var generalization_data = { stage: 'generalization', correct_response: 'space', valence: ''}
+    var surround = [-100, -60, -20, -5, 5, 20, 60, 100] 
+    var stimulus_folder = "sound/"    
+    var generalization_stimuli = [] 
+    var valence_tones = [300, 700] 
+    var response_keys = ['p', 'q']
+    var valence_types = ['positive', 'negative']
+    var neutral_tones = [500] 
+    var acquisition_trial_duration = 2500    
+    
+    
+    /* GENERATE DATA FILE FOR GENERALIZATION STAGE */
+    for (i_valence=0;i_valence<valence_tones.length;i_valence++){ 
+      /* ADD VALENCE TONES */ 
+      generalization_stimuli.push({stimulus: stimulus_folder+ (valence_tones[i_valence]),
+                                   data:{stage:'generalization', 
+                                         correct_response:response_keys[i_valence], 
+                                         valence: valence_types[i_valence]}})
+      /* ADD SURROUND TONES */ 
+      for (i_gen=0;i_gen<surround.length;i_gen++){ 
+        generalization_stimuli.push({stimulus:stimulus_folder+ (valence_tones[i_valence] + surround[i_gen]), 
+                                     data:generalization_data}) }}
+ 
+    /* GENERATE DATA FILE FOR THE ACQUISITION STAGE */
+    var acquisition_stimuli = [
+      { stimulus: stimulus_folder + valence_tones[0], 
+            data: { stage: 'acquisition', correct_response: 'p', valence: 'positive'} },
+      { stimulus: stimulus_folder + valence_tones[1], 
+            data: { stage: 'acquisition', correct_response: 'q', valence: 'negative'} },
+      { stimulus: stimulus_folder + neutral_tones[0], 
+            data: { stage: 'acquisition', correct_response: 'space', valence: 'neutral' } },
+    ];
+    
+    /* GENERATE AUDIO FILE FOR PRELOADING */
+    var audio = [] 
+    for (i=0;i<generalization_stimuli.length;i++)
+      { audio.push(generalization_stimuli[i]['stimulus'])}
+    for (i=0;i<acquisition_stimuli.length;i++)
+      { audio.push(acquisition_stimuli[i]['stimulus'])}
 
-    var scalar = 0.02
-   
     var instructions = {
       type: "html-button-response",
       stimulus: 
@@ -28,7 +66,7 @@
         	"For another sound, you'll be <b>penalized when you press any incorrect key</b>. " +
         	"For the last sound, <b>there's no reward or punishment</b>--it doesn't matter what you press. " +
         	"The amount of your reward or penalty will be displayed after each choice you make, " +
-        	"(e.g. +$" + scalar + ", -$" + scalar + ", or $0.00), " +
+        	"(e.g. +$" + bonus_amount + ", -$" + bonus_amount + ", or $0.00), " +
           "so you'll learn by paying attention to the feedback you get after each key press you make. " +
           "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " +
         	"These are the only three keys that will register any response, so remember them. " +
@@ -55,23 +93,6 @@
       post_trial_gap: 400, 
       choices: ["Let's go!"]
     };
- 
-    /* test trials */
-    var acquisition_stimuli = [
-      { stimulus: "sound/300", data: { stage: 'acquisition', correct_response: 'p', valence: 'positive'} },
-      { stimulus: "sound/500", data: { stage: 'acquisition', correct_response: 'q', valence: 'negative'} },
-      { stimulus: "sound/700", data: { stage: 'acquisition', correct_response: 'space', valence: 'neutral' } },
-    ];
-  
-    var generalization_stimuli = [
-      { stimulus: "sound/300", data: { stage: 'generalization', correct_response: 'p', valence: 'positive'} },
-      { stimulus: "sound/500", data: { stage: 'generalization', correct_response: 'q', valence: 'negative'} },
-      { stimulus: "sound/700", data: { stage: 'generalization', correct_response: 'space', valence: 'neutral' } },
-      { stimulus: "sound/350", data: { stage: 'generalization', correct_response: '6', valence: 'neutral'} },
-      { stimulus: "sound/600", data: { stage: 'generalization', correct_response: '6', valence: 'neutral'} },
-      { stimulus: "sound/900", data: { stage: 'generalization', correct_response: '6', valence: 'neutral' } },
-    ] 
-    
 
     var fixation = {
       type: 'html-keyboard-response',
@@ -87,6 +108,8 @@
       type: "audio-keyboard-response",
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q', 'space'],
+      trial_duration: acquisition_trial_duration,
+      response_ends_trial: true, 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
         data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response);
@@ -96,13 +119,13 @@
       type: "audio-keyboard-response",
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q', 'space', '6'],
+      trial_duration: acquisition_trial_duration, 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
         data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response)
         console.log(data)
   		}
     }
-
 
     var feedback = {
       type: 'html-keyboard-response',
@@ -126,7 +149,7 @@
             return '<font size="100%"> - 0.01</font>'
           }
         } else {
-          return '<font size="100%">--</font>'
+          return '<font size="100%"></font>'
         }
       }
     }
@@ -154,12 +177,12 @@
         var positive_trials = jsPsych.data.get().filter({valence:'positive'}) 
         var positive_correct = positive_trials.filter({correct: true});
         var positive_accuracy = positive_correct.count() / positive_trials.count()
-        var positive_bonus = positive_correct.count() * scalar 
+        var positive_bonus = positive_correct.count() * bonus_amount 
         console.log('positive bonus:', positive_bonus) 
         var negative_trials = jsPsych.data.get().filter({valence:'negative'}) 
         var negative_correct = negative_trials.filter({correct: true});
         var negative_accuracy = negative_correct.count() / negative_trials.count()
-        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * scalar
+        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
         console.log('negative bonus:', negative_bonus)
         return 'so far your total bonus is $' + Math.max(0, positive_bonus - negative_bonus)
       }
@@ -172,7 +195,7 @@
       stimulus: function() {
       
         var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
-        return 'bonus earned during this period: $' + (all_correct * scalar)
+        return 'bonus earned during this period: $' + (all_correct * bonus_amount)
       }
     };
 
@@ -185,33 +208,30 @@
         var positive_trials = jsPsych.data.get().filter({valence:'positive', stage:'acquisition'}) 
         var positive_correct = positive_trials.filter({correct: true});
         var positive_accuracy = positive_correct.count() / positive_trials.count()
-        var positive_bonus = positive_correct.count() * scalar 
+        var positive_bonus = positive_correct.count() * bonus_amount 
         console.log('positive bonus:', positive_bonus) 
         var negative_trials = jsPsych.data.get().filter({valence:'negative', stage:'acquisition'}) 
         var negative_correct = negative_trials.filter({correct: true});
         var negative_accuracy = negative_correct.count() / negative_trials.count()
-        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * scalar
+        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
         console.log('negative bonus:', negative_bonus)
         total_acquisition_bonus = Math.max(0, positive_bonus - negative_bonus)
       
         var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
-        total_generalization_bonus = all_correct * scalar
+        total_generalization_bonus = all_correct * bonus_amount
 
         total_bonus = total_generalization_bonus + total_acquisition_bonus
         return "That's it! Your total reward during this experiment was  $" + total_bonus
-
-      
       }
     };
-   
       
-
-    /* create timeline */
+    
+    /* CREATE TIMELINE */
     var timeline = [instructions, acquisition, acquisition_feedback, 
                     generalization_instructions, generalization, generalization_feedback, 
                     experiment_feedback];
    
-    var audio = ['sound/300', 'sound/500', 'sound/700', 'sound/350', 'sound/600', 'sound/900'];
+
     /* start the experiment */
     jsPsych.init({
       preload_audio: audio, 
