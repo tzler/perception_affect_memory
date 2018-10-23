@@ -25,7 +25,6 @@
     var neutral_tones = [500] 
     var acquisition_trial_duration = 2500    
     
-    
     /* GENERATE DATA FILE FOR GENERALIZATION STAGE */
     for (i_valence=0;i_valence<valence_tones.length;i_valence++){ 
       /* ADD VALENCE TONES */ 
@@ -107,7 +106,7 @@
 		var train = {
       type: "audio-keyboard-response",
       stimulus: jsPsych.timelineVariable('stimulus'), 
-      choices: ['p', 'q', 'space'],
+      choices: ['p', 'q'],
       trial_duration: acquisition_trial_duration,
       response_ends_trial: true, 
       data: jsPsych.timelineVariable('data'),
@@ -118,7 +117,7 @@
 		var test = {
       type: "audio-keyboard-response",
       stimulus: jsPsych.timelineVariable('stimulus'), 
-      choices: ['p', 'q', 'space', '6'],
+      choices: ['p', 'q', 'space'],
       trial_duration: acquisition_trial_duration, 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
@@ -153,6 +152,23 @@
         }
       }
     }
+    var generalization_trial_check = {
+      type: 'html-keyboard-response',
+      choices: jsPsych.NO_KEYS, 
+      trial_duration: 1000, 
+      stimulus: function(){
+      
+        var key_press = jsPsych.data.get().last(1).values()[0]['key_press'];
+        if (key_press==null) {
+          return "<p style='font-weight:bold; color: red; font-size=100%'> -$0.10 <br>RESPOND FASTER!</p>";
+          data.penalty = 1
+        } else {
+          return '<font size="100%"></font>'
+           data.penalty = 1       
+        }
+      }
+    }
+
 
     var acquisition = {
       timeline: [fixation, train, feedback],
@@ -162,7 +178,7 @@
     }
  
     var generalization = {
-      timeline: [fixation, test],
+      timeline: [fixation, test, generalization_trial_check],
       timeline_variables: generalization_stimuli,
       repetitions: 0,
       randomize_order: true
@@ -187,7 +203,8 @@
         return 'so far your total bonus is $' + Math.max(0, positive_bonus - negative_bonus)
       }
     };
-   
+ 
+
     /* define debrief */
     var generalization_feedback = {
       type: "html-keyboard-response",
@@ -227,7 +244,7 @@
       
     
     /* CREATE TIMELINE */
-    var timeline = [instructions, acquisition, acquisition_feedback, 
+    var timeline = [instructions, acquisition, acquisition_feedback,
                     generalization_instructions, generalization, generalization_feedback, 
                     experiment_feedback];
    
