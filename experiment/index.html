@@ -12,7 +12,7 @@
   </head>
   <body></body>
   <script>
-    
+
     /* EXPERIMENTAL PARAMETERS */ 
     var bonus_amount = 0.02
     var generalization_data = { stage: 'generalization', correct_response: 'space', valence: ''}
@@ -24,7 +24,8 @@
     var valence_types = ['positive', 'negative']
     var neutral_tones = [500] 
     var acquisition_trial_duration = 2500    
-    
+    var acquiaition_cycle = 5
+
     /* GENERATE DATA FILE FOR GENERALIZATION STAGE */
     for (i_valence=0;i_valence<valence_tones.length;i_valence++){ 
       /* ADD VALENCE TONES */ 
@@ -173,7 +174,7 @@
     var acquisition = {
       timeline: [fixation, train, feedback],
       timeline_variables: acquisition_stimuli,
-      repetitions: 0,
+      repetitions: acquisition_cycles,
       randomize_order: true
     }
  
