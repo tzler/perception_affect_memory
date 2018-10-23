@@ -21,16 +21,18 @@
       type: "html-button-response",
       stimulus: 
 			"<div style='width:70%;transform:translateX(20%)'>" +
-      	"<p><font size=15px>Welcome to our experiment!</font>" +
-        	"<br><br><br>In this experiment your goal is to learn how best to <b>respond to different sounds.</b> " +
-        	"<br><br>There will be three sounds. For one sound, you'll be <b>rewarded when you press the correct key</b>. " +
+        "<p style='font-size:200%; font-weight:bold'>Welcome to our experiment!</p>" +
+          "<p style='font-size:140%'>In this study your goal is to learn how best to respond to different sounds.</p>" +
+        	"You'll hear three sounds; you'll have to respond differently to each. " + 
+          "For one sound, you'll be <b>rewarded when you press the correct key</b>. " +
         	"For another sound, you'll be <b>penalized when you press any incorrect key</b>. " +
         	"For the last sound, <b>there's no reward or punishment</b>--it doesn't matter what you press. " +
-        	"You'll learn which of these is which by paying attention to the feedback you get after each key press you make: " +
         	"The amount of your reward or penalty will be displayed after each choice you make, " +
-        	"in terms of the dollar amount you'll receive for that trial's performance (e.g. +$" + scalar + ", -$" + scalar + ", or $0.00)." +
-       		"<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " +
-        	"These are the only three keys that will register any response, so remember them!" +
+        	"(e.g. +$" + scalar + ", -$" + scalar + ", or $0.00), " +
+          "so you'll learn by paying attention to the feedback you get after each key press you make. " +
+          "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " +
+        	"These are the only three keys that will register any response, so remember them. " +
+          "The faster you learn, the more bonus you'll be able to earn!" +  
       	"<p>" +
       "<div>", 
       post_trial_gap: 400, 
@@ -41,7 +43,7 @@
       type: "html-button-response",
       stimulus: "<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
-        "Now the experiment is going to change just a bit. " + 
+        "<p style='font-size:140%'>Now the experiment is going to change just a bit.</p>" + 
         "We'll play a sound, and you'll have to decide if it was among the first three sounds you heard. " + 
         "If it was, you should press the key that sound was associated with." + 
       "If the sound you hear is a new sound, not the three you heard you'll press the '<b>6</b>' key. " + 
