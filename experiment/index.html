@@ -24,7 +24,7 @@
     var valence_types = ['positive', 'negative']
     var neutral_tones = [500] 
     var acquisition_trial_duration = 2500    
-    var acquiaition_cycle = 5
+    var acquisition_cycles = 5
 
     /* GENERATE DATA FILE FOR GENERALIZATION STAGE */
     for (i_valence=0;i_valence<valence_tones.length;i_valence++){ 
@@ -62,14 +62,14 @@
         "<p style='font-size:200%; font-weight:bold'>Welcome to our experiment!</p>" +
           "<p style='font-size:140%'>In this study your goal is to learn how best to respond to different sounds.</p>" +
         	"You'll hear three sounds; you'll have to respond differently to each. " + 
-          "For one sound, you'll be <b>rewarded when you press the correct key</b>. " +
-        	"For another sound, you'll be <b>penalized when you press any incorrect key</b>. " +
-        	"For the last sound, <b>there's no reward or punishment</b>--it doesn't matter what you press. " +
+          "For the <em>positive</em> sound, you'll be <b>rewarded when you press the correct key</b>. " +
+          "For the <em>negative</em> sound, you'll be <b>penalized when you press any incorrect key</b>. " +
+          "For the <em>neutral</em> sound, <b>there's no reward or penalty</b>, and you don't have to do anything. " +
         	"The amount of your reward or penalty will be displayed after each choice you make, " +
         	"(e.g. +$" + bonus_amount + ", -$" + bonus_amount + ", or $0.00), " +
           "so you'll learn by paying attention to the feedback you get after each key press you make. " +
-          "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " +
-        	"These are the only three keys that will register any response, so remember them. " +
+          "<br><br>The two keys you can press throughout the experiment are '<b>p</b>' and '<b>q</b>'. " +
+        	"These are the only two keys that will register any response, so remember them. " +
           "The faster you learn, the more bonus you'll be able to earn!" +  
       	"<p>" +
       "<div>", 
@@ -82,11 +82,10 @@
       stimulus: "<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
         "<p style='font-size:140%'>Now the experiment is going to change just a bit.</p>" + 
-        "We'll play a sound, and you'll have to decide if it was among the first three sounds you heard. " + 
-        "If it was, you should press the key that sound was associated with." + 
-      "If the sound you hear is a new sound, not the three you heard you'll press the '<b>6</b>' key. " + 
-        "Your task will be to determine whether the sound you're hearing was among the first three tones you heard." +  
-        "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " + 
+        "We'll play a sound, and you'll have to decide if it was either the positive or negative sound in the last section. " + 
+        "If it was, you should press the key that sound was associated with (e.g. 'p' or 'q'), and you'll be rewarded. " + 
+        "If the sound you hear isn't the positive or negative tone, you'll press the '<b>space bar</b>'. " + 
+        "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and the '<b>spacebar</b>'. " + 
         "Again, these are the only three keys that will register any response!" + 
       "<p>" + 
       "<div>",  

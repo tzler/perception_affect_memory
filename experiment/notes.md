@@ -2,7 +2,7 @@
 
   -x- remove key press for neutral stimulus
   -x- select tones for the generalization stage
-  -o- impliment loss in generalization stage
-  -?- change keys (left, right, middle) 
+  -x- impliment loss in generalization stage
+    -o- incorporate non-response loss into bonus determination
   -o- counterbalance tone-reinforcement pairing across subjects
   -?- impliment pavlovian conditions ... ? 
