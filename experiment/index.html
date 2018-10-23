@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<! https://www.jspsych.org/tutorials/rt-task/ > 
+
+<html>
+  <head>
+    <title>Auditory experiment</title>
+    <script src="jspsych-6.0.5/jspsych.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-html-button-response.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-audio-keyboard-response.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-image-keyboard-response.js"></script>
+    <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+  </head>
+  <body></body>
+  <script>
+
+    var scalar = 0.02
+   
+    var instructions = {
+      type: "html-button-response",
+      stimulus: 
+			"<div style='width:70%;transform:translateX(20%)'>" +
+      	"<p><font size=15px>Welcome to our experiment!</font>" +
+        	"<br><br><br>In this experiment your goal is to learn how best to <b>respond to different sounds.</b> " +
+        	"<br><br>There will be three sounds. For one sound, you'll be <b>rewarded when you press the correct key</b>. " +
+        	"For another sound, you'll be <b>penalized when you press any incorrect key</b>. " +
+        	"For the last sound, <b>there's no reward or punishment</b>--it doesn't matter what you press. " +
+        	"You'll learn which of these is which by paying attention to the feedback you get after each key press you make: " +
+        	"The amount of your reward or penalty will be displayed after each choice you make, " +
+        	"in terms of the dollar amount you'll receive for that trial's performance (e.g. +$" + scalar + ", -$" + scalar + ", or $0.00)." +
+       		"<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " +
+        	"These are the only three keys that will register any response, so remember them!" +
+      	"<p>" +
+      "<div>", 
+      post_trial_gap: 400, 
+      choices: ["<p style='margin: 10px'>I'm ready to start!</p>"]
+    };
+
+    var generalization_instructions = {
+      type: "html-button-response",
+      stimulus: "<div style='width:70%;transform:translateX(20%)'>" + 
+      "<p>" + 
+        "Now the experiment is going to change just a bit. " + 
+        "We'll play a sound, and you'll have to decide if it was among the first three sounds you heard. " + 
+        "If it was, you should press the key that sound was associated with." + 
+      "If the sound you hear is a new sound, not the three you heard you'll press the '<b>6</b>' key. " + 
+        "Your task will be to determine whether the sound you're hearing was among the first three tones you heard." +  
+        "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and '<b>spacebar</b>'. " + 
+        "Again, these are the only three keys that will register any response!" + 
+      "<p>" + 
+      "<div>",  
+      post_trial_gap: 400, 
+      choices: ["Let's go!"]
+    };
+ 
+    /* test trials */
+    var acquisition_stimuli = [
+      { stimulus: "sound/300", data: { stage: 'acquisition', correct_response: 'p', valence: 'positive'} },
+      { stimulus: "sound/500", data: { stage: 'acquisition', correct_response: 'q', valence: 'negative'} },
+      { stimulus: "sound/700", data: { stage: 'acquisition', correct_response: 'space', valence: 'neutral' } },
+    ];
+  
+    var generalization_stimuli = [
+      { stimulus: "sound/300", data: { stage: 'generalization', correct_response: 'p', valence: 'positive'} },
+      { stimulus: "sound/500", data: { stage: 'generalization', correct_response: 'q', valence: 'negative'} },
+      { stimulus: "sound/700", data: { stage: 'generalization', correct_response: 'space', valence: 'neutral' } },
+      { stimulus: "sound/350", data: { stage: 'generalization', correct_response: '6', valence: 'neutral'} },
+      { stimulus: "sound/600", data: { stage: 'generalization', correct_response: '6', valence: 'neutral'} },
+      { stimulus: "sound/900", data: { stage: 'generalization', correct_response: '6', valence: 'neutral' } },
+    ] 
+    
+
+    var fixation = {
+      type: 'html-keyboard-response',
+      stimulus: '<div style="font-size:120%; top:20%"></div>',
+      choices: jsPsych.NO_KEYS,
+      trial_duration: function(){
+        return jsPsych.randomization.sampleWithoutReplacement([1000, 1500], 1)[0];
+      },
+      data: {test_part: 'fixation'}
+    }
+    
+		var train = {
+      type: "audio-keyboard-response",
+      stimulus: jsPsych.timelineVariable('stimulus'), 
+      choices: ['p', 'q', 'space'],
+      data: jsPsych.timelineVariable('data'),
+      on_finish: function(data){
+        data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response);
+  		}
+    }
+		var test = {
+      type: "audio-keyboard-response",
+      stimulus: jsPsych.timelineVariable('stimulus'), 
+      choices: ['p', 'q', 'space', '6'],
+      data: jsPsych.timelineVariable('data'),
+      on_finish: function(data){
+        data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response)
+        console.log(data)
+  		}
+    }
+
+
+    var feedback = {
+      type: 'html-keyboard-response',
+      choices: jsPsych.NO_KEYS, 
+      trial_duration: 1000, 
+      stimulus: function(){
+      
+        var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+        var stimulus = jsPsych.data.get().last(1).values()[0].stimulus
+        var valence = jsPsych.data.get().last(1).values()[0].valence
+        if (valence=='positive') {
+          if (last_trial_correct){  
+            return '<font size="100%"> + 0.01</font>';
+          } else {
+            return '<font size="100%"> + 0.00</font>'
+          }
+        } else if (valence=='negative') { 
+          if (last_trial_correct){  
+            return '<font size="100%"> - 0.00</font>';
+          } else {
+            return '<font size="100%"> - 0.01</font>'
+          }
+        } else {
+          return '<font size="100%">--</font>'
+        }
+      }
+    }
+
+    var acquisition = {
+      timeline: [fixation, train, feedback],
+      timeline_variables: acquisition_stimuli,
+      repetitions: 0,
+      randomize_order: true
+    }
+ 
+    var generalization = {
+      timeline: [fixation, test],
+      timeline_variables: generalization_stimuli,
+      repetitions: 0,
+      randomize_order: true
+    }
+    
+    /* define debrief */
+    var acquisition_feedback = {
+      type: "html-keyboard-response",
+      
+      stimulus: function() {
+      
+        var positive_trials = jsPsych.data.get().filter({valence:'positive'}) 
+        var positive_correct = positive_trials.filter({correct: true});
+        var positive_accuracy = positive_correct.count() / positive_trials.count()
+        var positive_bonus = positive_correct.count() * scalar 
+        console.log('positive bonus:', positive_bonus) 
+        var negative_trials = jsPsych.data.get().filter({valence:'negative'}) 
+        var negative_correct = negative_trials.filter({correct: true});
+        var negative_accuracy = negative_correct.count() / negative_trials.count()
+        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * scalar
+        console.log('negative bonus:', negative_bonus)
+        return 'so far your total bonus is $' + Math.max(0, positive_bonus - negative_bonus)
+      }
+    };
+   
+    /* define debrief */
+    var generalization_feedback = {
+      type: "html-keyboard-response",
+      
+      stimulus: function() {
+      
+        var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
+        return 'bonus earned during this period: $' + (all_correct * scalar)
+      }
+    };
+
+    /* define debrief */
+    var experiment_feedback = {
+      type: "html-keyboard-response",
+      
+      stimulus: function() {
+        
+        var positive_trials = jsPsych.data.get().filter({valence:'positive', stage:'acquisition'}) 
+        var positive_correct = positive_trials.filter({correct: true});
+        var positive_accuracy = positive_correct.count() / positive_trials.count()
+        var positive_bonus = positive_correct.count() * scalar 
+        console.log('positive bonus:', positive_bonus) 
+        var negative_trials = jsPsych.data.get().filter({valence:'negative', stage:'acquisition'}) 
+        var negative_correct = negative_trials.filter({correct: true});
+        var negative_accuracy = negative_correct.count() / negative_trials.count()
+        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * scalar
+        console.log('negative bonus:', negative_bonus)
+        total_acquisition_bonus = Math.max(0, positive_bonus - negative_bonus)
+      
+        var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
+        total_generalization_bonus = all_correct * scalar
+
+        total_bonus = total_generalization_bonus + total_acquisition_bonus
+        return "That's it! Your total reward during this experiment was  $" + total_bonus
+
+      
+      }
+    };
+   
+      
+
+    /* create timeline */
+    var timeline = [instructions, acquisition, acquisition_feedback, 
+                    generalization_instructions, generalization, generalization_feedback, 
+                    experiment_feedback];
+   
+    var audio = ['sound/300', 'sound/500', 'sound/700', 'sound/350', 'sound/600', 'sound/900'];
+    /* start the experiment */
+    jsPsych.init({
+      preload_audio: audio, 
+      use_webaudio: false,
+			timeline: timeline,
+      /*on_finish: function() {jsPsych.data.displayData();}*/
+    });
+  </script>
+</html>
