@@ -66,7 +66,7 @@ hit_info['iteration_name'] = 'pilot0_251'
 hit_info['time_of_submission'] = datetime.datetime.now().strftime("%H:%M_%m_%d_%Y")
 hit_info['platform'] = context
 # mturk description info 
-hit_info['external_url'] = "https://rxdhawkins.me:8881/index.html"%(task_name)
+hit_info['external_url'] = "https://rxdhawkins.me:8881/index.html"
 # 167.99.111.118
 #hit_info['external_url'] = "167.99.111.118:8881/%s/index.html"%(task_name)
 hit_info['keywords'] = ['images', 'psychology', 'neuroscience', 'game', 'fun', 'experiment', 'research']
