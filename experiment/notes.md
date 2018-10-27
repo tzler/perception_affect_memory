@@ -5,4 +5,6 @@
   -x- impliment loss in generalization stage
     -o- incorporate non-response loss into bonus determination
   -o- counterbalance tone-reinforcement pairing across subjects
-  -?- impliment pavlovian conditions ... ? 
+  -x- impliment pavlovian conditions ... ? 
+
+
