@@ -3,16 +3,23 @@
 <html>
   <head>
     <title>Auditory experiment</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="jspsych-6.0.5/jspsych.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-instructions.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-html-keyboard-response.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-html-button-response.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-audio-keyboard-response.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-image-keyboard-response.js"></script>
     <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
   </head>
-  <body></body>
-  <script>
+ 
 
+  <script> 
+  
+    // FUNCTIONS TO PLAY TONES ON INSTRUCTION SLIDE
+    function play_low() { document.getElementById("low_audio").play() } 
+    function play_high() { document.getElementById("high_audio").play(); } 
+  
     /* EXPERIMENTAL PARAMETERS */ 
     var bonus_amount = 0.02
     var generalization_data = { stage: 'generalization', correct_response: 'space', valence: ''}
@@ -24,8 +31,10 @@
     var valence_types = ['positive', 'negative']
     var neutral_tones = [500] 
     var acquisition_trial_duration = 2500    
-    var acquisition_cycles = 5
-
+    var acquisition_cycles = 0
+    var instrumental_prompt = '<div style="font-size:120%; bottom: 10px; font-weight:bold">For positive tones press "p" for negative tones press "q"</div>'
+    var helpless_prompt = '<div style="font-size:120%; bottom: 10px; font-weight:bold">helpless</div>' 
+    
     /* GENERATE DATA FILE FOR GENERALIZATION STAGE */
     for (i_valence=0;i_valence<valence_tones.length;i_valence++){ 
       /* ADD VALENCE TONES */ 
@@ -37,15 +46,36 @@
       for (i_gen=0;i_gen<surround.length;i_gen++){ 
         generalization_stimuli.push({stimulus:stimulus_folder+ (valence_tones[i_valence] + surround[i_gen]), 
                                      data:generalization_data}) }}
+
+    var positive_instrumental = {
+      stimulus: stimulus_folder + valence_tones[0], 
+      prompt: instrumental_prompt,
+      data: { stage: 'acquisition', correct_response: 'p', valence: 'positive', condition: "instrumental"}
+    };
+    var negative_instrumental = {
+      stimulus: stimulus_folder + valence_tones[1], 
+      prompt: instrumental_prompt,
+      data: { stage: 'acquisition', correct_response: 'q', valence: 'negative', condition: "instrumental"}
+    };
+    var neutral_instrumental = {
+      stimulus: stimulus_folder + neutral_tones[0], 
+      prompt: instrumental_prompt, 
+      data: { stage: 'acquisition', correct_response: 'space', valence: 'neutral', condition: "instrumental" }
+    };
+    var positive_pavlovian = {
+      stimulus: stimulus_folder + valence_tones[0], 
+      prompt: helpless_prompt,
+      data: { stage: 'acquisition', correct_response: 'p', valence: 'positive', condition: "pavlovian", correct: true} 
+    };
+    var negative_pavlovian = {
+      stimulus: stimulus_folder + valence_tones[1], 
+      prompt: helpless_prompt,
+      data: { stage: 'acquisition', correct_response: 'q', valence: 'negative', condition: "pavlovian", correct: false}
+    }
  
-    /* GENERATE DATA FILE FOR THE ACQUISITION STAGE */
+    /* GENERATE DATA FILE FOR THE ACQUISITION STAGE WITH THE RIGHT DISTRIBUTION THAT WE'LL PRESENT RANDOMLY*/
     var acquisition_stimuli = [
-      { stimulus: stimulus_folder + valence_tones[0], 
-            data: { stage: 'acquisition', correct_response: 'p', valence: 'positive'} },
-      { stimulus: stimulus_folder + valence_tones[1], 
-            data: { stage: 'acquisition', correct_response: 'q', valence: 'negative'} },
-      { stimulus: stimulus_folder + neutral_tones[0], 
-            data: { stage: 'acquisition', correct_response: 'space', valence: 'neutral' } },
+      positive_instrumental, positive_instrumental, negative_instrumental, negative_instrumental, neutral_instrumental, neutral_instrumental, positive_pavlovian, negative_pavlovian
     ];
     
     /* GENERATE AUDIO FILE FOR PRELOADING */
@@ -56,25 +86,82 @@
       { audio.push(acquisition_stimuli[i]['stimulus'])}
 
     var instructions = {
-      type: "html-button-response",
-      stimulus: 
-			"<div style='width:70%;transform:translateX(20%)'>" +
-        "<p style='font-size:200%; font-weight:bold'>Welcome to our experiment!</p>" +
-          "<p style='font-size:140%'>In this study your goal is to learn how best to respond to different sounds.</p>" +
-        	"You'll hear three sounds; you'll have to respond differently to each. " + 
-          "For the <em>positive</em> sound, you'll be <b>rewarded when you press the correct key</b>. " +
-          "For the <em>negative</em> sound, you'll be <b>penalized when you press any incorrect key</b>. " +
-          "For the <em>neutral</em> sound, <b>there's no reward or penalty</b>, and you don't have to do anything. " +
-        	"The amount of your reward or penalty will be displayed after each choice you make, " +
-        	"(e.g. +$" + bonus_amount + ", -$" + bonus_amount + ", or $0.00), " +
-          "so you'll learn by paying attention to the feedback you get after each key press you make. " +
-          "<br><br>The two keys you can press throughout the experiment are '<b>p</b>' and '<b>q</b>'. " +
-        	"These are the only two keys that will register any response, so remember them. " +
-          "The faster you learn, the more bonus you'll be able to earn!" +  
-      	"<p>" +
-      "<div>", 
-      post_trial_gap: 400, 
-      choices: ["<p style='margin: 10px'>I'm ready to start!</p>"]
+      type:  "instructions", // "html-button-response",
+      // read slide structure from HTML element
+      pages:[ 
+        
+      "<div style='width:70%;transform:translateX(20%)'>"+
+      "<p style='font-size:200%; font-weight:bold'>Welcome to our experiment!</p>" + 
+        "<p style='font-size:140%'>In this study your goal is to learn how best to respond to different sounds.</p>"+ 
+        "<p> " + 
+          "You'll hear three sounds, and you'll have to respond differently to each one. " + 
+          "For one sound, you'll have a small amount added to your bonus when you press the correct key</b>. " + 
+          "We'll call this the 'positive' sound. " + 
+          "For another sound you'll have a small amound taken away from your bonus when you press the incorrect key. " + 
+          "We'll call this the 'negative' sound. " + 
+          "For a the last sound, nothing will happen, and you don't have to press anything. " +  
+        "</p>" + 
+        "<p style='font-size:120%;'> " + 
+          "Once you learn which key to press for each sound, you'll be able to gain bonus after the positive sound, and avoid loosing bonus after the negative sound. " +        
+        "</p></div>", 
+        "<div style='width:70%;transform:translateX(20%)'><p>" +  
+          "<p style='font-size:200%; font-weight:'>Bonus and timing information</p>" +
+          "<p> The two keys you'll use to respond to these sounds are <b>p</b> and <b>q</b>. " + 
+            "When you press the correct key for the positive sound, you'll receive $" + bonus_amount  + ". If you are incorrect you wont receive any bonus. " +  
+            "When you press the correct key for the negative sound, you wont loose any bonus. " + 
+            "If you press the incorrect key, you'll have $" + bonus_amount + " taken away from your total bonus. " +  
+            "<br><br>" + 
+            "You'll have two seconds to respond to each sound. " + 
+            "After each response, you'll receive feedback: the amount you earned or lost will be presented at the center of the screen." + 
+            "If you dont respond in two seconds, you'll be marked as incorrect and--depending on the trial--you'll either loose bonus, or wont gain any bonus. " + 
+            "</div>" ,  
+        "<div style='width:70%;transform:translateX(20%)'> " + 
+        "<audio id='low_audio'><source src='sound/100' type='audio/mpeg'></audio> " + 
+        "<audio id='high_audio'><source src='sound/920' type='audio/mpeg'></audio> " + 
+          "<p style='font-size:200%; font-weight:'>Testing the sound presentation</p>" +
+        "<p> " + 
+          "If you press the buttons below, you'll hear the kind of sounds that will be played throughout the experiment. " + 
+        "</p> " +
+        "<p> " +  
+          "<button onclick='play_low()' type='button' style='padding:10px; margin:10px 100px' >SOUND EXAMPLE A</button> " + 
+          "<button onclick='play_high()' type='button' style='padding:10px; margin:10px 100px' >SOUND EXAMPLE B</button> " +  
+        "</p>" + 
+        "<p>" + 
+          "If you can't hear these two sounds, try turning up the volume. If that doesn't work, you shouldn't accept this HIT: " + 
+          "<strong>If you can't hear these sounds, you wont be able to make any money in this experiment.</strong>"+ 
+      "</div> ", 
+      "<div style='width:70%;transform:translateX(20%)'>"+ 
+        "<p style='font-size:150%'></p>" + 
+        "<p>" + 
+          "Between sounds, this will be a prompt on on the screen, reminding you which buttons to press. " + 
+          "But sometimes, before you hear the next sound, you'll see this presented at the center of the screen:" + 
+          "<br><br><br>" + 
+        "<p style='font-weight:bold; font-size:120%'>helpless</p>" +  
+        "<br>" + 
+        "<p>" + 
+          "When you see this, you don't need to respond. One of two things will happen. " + 
+          "If a positive sound is played, $" + bonus_amount + " will be automatically added to the bonus you've earned--you don't need to press anything. " + 
+          "If a negative sound is played, $" + bonus_amount + " will be taken away from the total bonus you've earned--you can't stop this." +  
+        "<br>" +
+        "</p>" + 
+      "</div>",  
+      "<div style='width:70%;transform:translateX(20%)'> " +
+        "<br><br>" + 
+        "We expect this HIT to take about 10 minutes. If you perform really well, you can earn over $3.00. " + 
+        "Once the experiment starts it moves forward automatically, so you should only begin the HIT when you can focus on the task. " + 
+        "Feel free to read over the instructions again if you're uncertain about anything. " + 
+        "If you're ready to begin the experiment, click the button below to proceed."  +
+        "<br><br>" 
+        ], 
+        
+      show_clickable_nav: true,
+      show_page_number: true, 
+      post_trial_gap: 1000, 
+      choices: ["<p style='margin: 10px'>I'm ready to start!</p>"],
+      on_load: function(trial) {
+        // modify HTML to include bonus amount
+        $(".bonus_amount").html(bonus_amount, 'any arguments other than the first will be ignored');
+      }
     };
 
     var generalization_instructions = {
@@ -95,12 +182,14 @@
 
     var fixation = {
       type: 'html-keyboard-response',
-      stimulus: '<div style="font-size:120%; top:20%"></div>',
       choices: jsPsych.NO_KEYS,
-      trial_duration: function(){
+      stimulus: '<div style="font-size:120%; top:20%"></div>',
+      trial_duration: 1000, 
+      /*function(){
         return jsPsych.randomization.sampleWithoutReplacement([1000, 1500], 1)[0];
-      },
-      data: {test_part: 'fixation'}
+      },*/
+      data: {test_part: 'fixation'},
+      prompt: jsPsych.timelineVariable('prompt'),
     }
     
 		var train = {
@@ -108,11 +197,16 @@
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q'],
       trial_duration: acquisition_trial_duration,
-      response_ends_trial: true, 
+      response_ends_trial: false,
+      post_trial_gap: 300, 
+      prompt: jsPsych.timelineVariable('prompt'), 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
-        data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response);
-  		}
+        // if it's pavlovian, data.correct is already set
+        if (data.condition == "instrumental") {
+          data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response);
+        }
+  		},
     }
 		var test = {
       type: "audio-keyboard-response",
@@ -128,8 +222,10 @@
 
     var feedback = {
       type: 'html-keyboard-response',
-      choices: jsPsych.NO_KEYS, 
+      choices: jsPsych.NO_KEYS,
       trial_duration: 1000, 
+      post_trial_gap: 500, 
+
       stimulus: function(){
       
         var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
@@ -137,15 +233,15 @@
         var valence = jsPsych.data.get().last(1).values()[0].valence
         if (valence=='positive') {
           if (last_trial_correct){  
-            return '<font size="100%"> + 0.01</font>';
+            return '<font size="100%" weight=bold> + $0.01 </font>';
           } else {
-            return '<font size="100%"> + 0.00</font>'
+            return '<font size="100%" weight=bold> + $0.00 </font>'
           }
         } else if (valence=='negative') { 
           if (last_trial_correct){  
-            return '<font size="100%"> - 0.00</font>';
+            return '<font size="100%" weight=bold> - $0.00 </font>';
           } else {
-            return '<font size="100%"> - 0.01</font>'
+            return '<font size="100%" weight=bold> - $0.01 </font>'
           }
         } else {
           return '<font size="100%"></font>'
@@ -171,10 +267,16 @@
 
 
     var acquisition = {
+      // for 2 out of every 10 of these should be "pavlovian":
+      //    - fixation should say "helpless!"
+      //    - for one of those two, trial should play negative tone and feedback should be negative
+      //    - for the other, trial should play positive tone and feedback should be positive
       timeline: [fixation, train, feedback],
+      // condition: "pavlovian" or "instrumental",
       timeline_variables: acquisition_stimuli,
       repetitions: acquisition_cycles,
-      randomize_order: true
+      randomize_order: true,
+      // could put something here.
     }
  
     var generalization = {
@@ -200,7 +302,7 @@
         var negative_accuracy = negative_correct.count() / negative_trials.count()
         var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
         console.log('negative bonus:', negative_bonus)
-        return 'so far your total bonus is $' + Math.max(0, positive_bonus - negative_bonus)
+        return 'so far your total bonus is $' + Math.max(0, positive_bonus - negative_bonus).toFixed(2); 
       }
     };
  
@@ -256,5 +358,6 @@
 			timeline: timeline,
       /*on_finish: function() {jsPsych.data.displayData();}*/
     });
+  
   </script>
 </html>
