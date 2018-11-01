@@ -11,30 +11,16 @@
     <script src="jspsych-6.0.5/plugins/jspsych-audio-keyboard-response.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-image-keyboard-response.js"></script>
     <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
-  
-  
+    <script src="jspsych-6.0.5/plugins/jspsych-external-html.js"></script>
     <!-- node libraries -->
     <script type="text/javascript" src="../socket.io/socket.io.js"></script>
     <script type="text/javascript" src="../node_modules/paper/dist/paper-full.js"></script>
   
   </head>
 
-	<!-- BEGIN MTURK AND MONGO COMPATABILITY -->  
-  <body>
-    <!-- mturk compatability form -->
-    <input type=hidden name='submit_data' id='submit_all_data'>
-    <form name="hitForm" id="hitForm" method="POST" action="">
-      <input type="hidden" name="assignmentId" id="assignmentId" value="">
-      <input type='submit' name='submitButton' id='submitButton' value='Submit' class='submit_button'>
-    </form>
-  </body>
-	 	<!--  custom javascript functions -->
-	<script src='functions.js'></script>
-  <!-- END MTURK AND MONGO COMPATABILITY -->
-	
   <script> 
-
-    // FUNCTIONS TO PLAY TONES ON INSTRUCTION SLIDE
+    
+  // FUNCTIONS TO PLAY TONES ON INSTRUCTION SLIDE
     function play_low() { document.getElementById("low_audio").play() } 
     function play_high() { document.getElementById("high_audio").play(); } 
   
@@ -186,18 +172,28 @@
     };
 
     var generalization_instructions = {
-      type: "html-button-response",
-      stimulus: "<div style='width:70%;transform:translateX(20%)'>" + 
+      type: "instructions",
+      pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
         "<p style='font-size:140%'>Now the experiment is going to change just a bit.</p>" + 
         "We'll play a sound, and you'll have to decide if it was either the positive or negative sound in the last section. " + 
-        "If it was, you should press the key that sound was associated with (e.g. 'p' or 'q'), and you'll be rewarded. " + 
+        "If it was, you should press the key that sound was associated with (e.g. 'p' or 'q'). " + 
         "If the sound you hear isn't the positive or negative tone, you'll press the '<b>space bar</b>'. " + 
-        "<br><br>The three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and the '<b>spacebar</b>'. " + 
-        "Again, these are the only three keys that will register any response!" + 
+        "Every time you get the answer right you'll receive a bonus of (BONUS_AMOUNT?)</p></div>", 
+      "<div style='width:70%;transform:translateX(20%)'><p>" + 
+        "You wont loose money by getting an answer wrong, but you will loose A LOT of money ($0.20) if you don't respond within 2 seconds. " + 
+        "If you take too long, red words will flash on the screen telling you to respond faster. " + 
+        "Otherwise, there's no feedback after each response (it's not like the last part; " + 
+        "instead we'll tell you how much bonus you earned at the end of this stage.</p></div>", 
+      "<div style='width:70%;transform:translateX(20%)'><p>" +
+       "Again the three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and the '<b>spacebar</b>'. " + 
+        "Respond quickly, to avoid loosing your bonus, and the more accurate you are, the more bonus you'll earn! " + 
       "<p>" + 
-      "<div>",  
-      post_trial_gap: 400, 
+      "<div>"],  
+      post_trial_gap: 400,
+      show_clickable_nav: true,
+      show_page_number: true, 
+
       choices: ["Let's go!"]
     };
 
@@ -248,7 +244,7 @@
         save_trial_to_database(data)
       }
     }
-
+    console.log(document.getElementById('assignmentId'))
     var feedback = {
       type: 'html-keyboard-response',
       choices: jsPsych.NO_KEYS,
@@ -331,7 +327,8 @@
         var negative_accuracy = negative_correct.count() / negative_trials.count()
         var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
         console.log('negative bonus:', negative_bonus)
-        return 'so far your total bonus is $' + Math.max(0, positive_bonus - negative_bonus).toFixed(2); 
+        return "The total bonus amount of bonus you've earned so far is $" + Math.max(0, positive_bonus - negative_bonus).toFixed(2) + 
+        ".<br> Press any button to continue to the next step."
       }
     };
  
@@ -368,16 +365,32 @@
         var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
         total_generalization_bonus = all_correct * bonus_amount
 
-        total_bonus = total_generalization_bonus + total_acquisition_bonus
-        return "That's it! Your total reward during this experiment was  $" + total_bonus
-      }
+        return "That's it! Your total reward during this experiment was  $"
+      },
+      on_load: function() { 
+
+        } 
     };
       
-    
+    var exit_slide = {
+      type: 'instructions', 
+      stimulus:'thats it!', 
+      on_start: function(){ $('#hidden_submit').show() }
+
+    }
+
     /* CREATE TIMELINE */
-    var timeline = [instructions, acquisition, acquisition_feedback,
-                    generalization_instructions, generalization, generalization_feedback, 
-                    experiment_feedback];
+    var timeline = [
+                    instructions, 
+                    acquisition, 
+                    acquisition_feedback, 
+                    generalization_instructions, 
+                    generalization,
+                    generalization_feedback, 
+                    experiment_feedback,
+    ];
+
+
    
 
     /* start the experiment */
@@ -385,8 +398,23 @@
       preload_audio: audio, 
       use_webaudio: false,
 			timeline: timeline,
-      /*on_finish: function() {jsPsych.data.displayData();}*/
+      on_finish: function() {
+        $('#hidden_submit').show()
+      }
     });
-  
   </script>
+
+	<!-- BEGIN MTURK AND MONGO COMPATABILITY -->  
+  <body>
+    <!-- mturk compatability form -->
+    <div id='hidden_submit' style='display:none; position: absolute; top:50%; left: 50%;; padding: 10px background:grey'> 
+    <form name="hitForm" id="hitForm" method="POST" action=""> 
+      <input type="hidden" name="assignmentId" id="assignmentId" value="">
+      <input type='submit' name='submitButton' id='submitButton' value='Submit' class='submit_button'>
+    </form>
+  </body>
+	 	<!--  custom javascript functions -->
+	<script src='functions.js'></script>
+  <!-- END MTURK AND MONGO COMPATABILITY -->
+
 </html>

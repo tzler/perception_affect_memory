@@ -10,38 +10,13 @@ var supported_browsers = ['Chrome']
 //document.getElementById("worker_input").value = ''
 
 //////////////////////////////////////////// EXPERIMENT CLOCK ////////////////////////////////////////
-
-$('#submitButton').click(function(){
-  
-  current_data = {   	
-    data_type: 'worker_feedback', 
-    worker_input: document.getElementById("worker_input").value,   
-    dbname: mongo_database_name,
-    colname: mongo_collection_name,
-    iteration_name: iteration_name,
-		n_block: i_block, 
-    n_trials: i_trial, 
-    experiment_cluster_order: trial_data['experiment_cluster_order'],
-    total_bonus_earned: bonus_earned, 
-    n_trials_performance_cutoff: 100, 
-    experiment_duration: current_experiment_duration/60, 
-    final_accuracies: trial_data['assesment_window_accuracy'][i_trial-1], 
-    worker_id: GetWorkerId(),
-    assignment_id: GetAssignmentId(),
-    hit_id: turkGetParam( 'hitId', "NOPE" ),
-  } 
-  console.log('worker feedback:', current_data)  
-  socket.emit('current_data', current_data); 
-})
-
-
 function exit_protocol() {
   
-  $('#submitButton').show()
+  $(body).show() 
   console.log('total time of experiment, in minutes: ', trial_data['experiment_duration_seconds'] / 60)
   save_experiment_to_database(trial_data)
   // mturk save
-  document.getElementById("submit_all_data").value = JSON.stringify(trial_data)
+  //document.getElementById("submit_all_data").value = JSON.stringify(trial_data)
   
 }
 
@@ -152,9 +127,8 @@ socket = io.connect();
 
   // set mturk details from the values we've extracted/will extract
   document.getElementById('hitForm').setAttribute('action', submission_url)
-  //console.log('submission_url ', submission_url )//'assignment_id', GetAssignmentId()) 
+  console.log('submission_url ', submission_url )//'assignment_id', GetAssignmentId()) 
   $('#assignmentId').val(GetAssignmentId());
-  $('#workerId').val(GetWorkerId());
 
 
 ////////////////////////////////////////////// MANAGE ZOOM SETTINGS /////////////////////////////////////
