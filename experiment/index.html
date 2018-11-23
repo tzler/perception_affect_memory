@@ -30,13 +30,21 @@
     var bonus_amount = 0.02
     var generalization_bonus_amount = 0.02
     var generalization_data = { stage: 'generalization', correct_response: 'space', valence: ''}
-
+    
+    var tone_balance = 1*(Math.random()>0.5);
+    var two_tones = [300, 700] 
+    var valence_tones = [two_tones[tone_balance], two_tones[1*(!tone_balance)]]
     //var surround = [-100, -60, -20, -5, 5, 20, 60, 100] 
     var surround = [-100, -20, -5, 5, 20, 100]
     var stimulus_folder = "sound/"    
     var generalization_stimuli = [] 
-    var valence_tones = [300, 700] 
-    var response_keys = ['p', 'q']
+    
+    var key_balance = 1*(Math.random()>0.5);
+    var two_keys = ['p', 'q'] 
+    var response_keys = [ two_keys[key_balance], two_keys[1*(!key_balance)]]
+    
+    console.log('response:', response_keys, 'tones:', valence_tones)
+    
     var valence_types = ['positive', 'negative']
     var neutral_tones = [500] 
     var acquisition_trial_duration = 2500    
@@ -94,13 +102,13 @@
     /* GENERATE DATA FOR THE ACQUISITION STAGE */
     var acquisition_stimuli = [
       positive_instrumental, 
-/*      positive_instrumental, 
+      positive_instrumental, 
       negative_instrumental, 
       negative_instrumental, 
       neutral_instrumental, 
       neutral_instrumental,
       positive_pavlovian, 
-      negative_pavlovian */
+      negative_pavlovian 
     ];
     
     /* GENERATE AUDIO FILE FOR PRELOADING */
@@ -191,7 +199,7 @@
       type: "instructions",
       pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
-        "<p style='font-size:140%'>Now you'll begin the <em>second part</em>of the experiment</p>" + 
+        "<p style='font-size:140%'>Now you'll begin the second part of the experiment</p>" + 
         "<p>We'll play a sound, and you'll have to decide if it was either the positive or negative sound in the last section.</p>" + 
         "If it was, you should press the key that sound was associated with (e.g. 'p' or 'q'). " + 
         "If the sound you hear isn't the positive or negative tone, you'll press the '<b>space bar</b>'. " + 
