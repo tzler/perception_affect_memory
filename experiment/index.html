@@ -429,14 +429,39 @@
 
     /* CREATE TIMELINE */
     var timeline = [
-/*                    instructions, 
+                    /* INITIAL INSTRUCTIONS */ 
+                    instructions, 
+                    
+                    /* FIRST ACQUISITION BLOCK */ 
                     acquisition, 
                     acquisition_feedback, 
-                    generalization_instructions, */
+                    
+                    /* FIRST GENERALIZATION BLOCK */ 
+                    generalization_instructions,
                     generalization,
                     generalization_feedback,
+                    
+                    /* SECOND ACQUISITION BLOCK */ 
                     acquisition_return_instructions, 
                     acquisition,  
+                    acquisition_feedback,
+                    
+                    /* SECOND GENERALIZATION BLOCK */ 
+                    generalization_return_instructions, 
+                    generalization, 
+                    generalization_feedback,
+
+                    /* ACQUISITION BLOCK */ 
+                    acquisition_return_instructions, 
+                    acquisition,  
+                    acquisition_feedback, 
+
+                    /* LAST GENERALIZATION BLOCK */
+                    generalization_return_instructions, 
+                    generalization, 
+                    generalization_feedback,
+                    
+                    /* EXPERIMENT SUMMARY */
                     experiment_feedback,
     ];
 
