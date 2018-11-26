@@ -34,31 +34,41 @@
     var tone_balance = 1*(Math.random()>0.5);
     var two_tones = [300, 700] 
     var valence_tones = [two_tones[tone_balance], two_tones[1*(!tone_balance)]]
-    //var surround = [-100, -60, -20, -5, 5, 20, 60, 100] 
-    var surround = [-100, -20, -5, 5, 20, 100]
+    
+    var demo = 1
+    if (demo){
+      var surround = [-100, -20]
+      var randos = [] 
+      var n_repeats_of_original = 1
+      var acquisition_cycyles = 0
+      var generalization_cycles = 0
+      console.log('experiment in demo version')
+    } else {
+      var surround = [-100, -20, -5, 5, 20, 100]
+      var randos = [480, 500, 520, 880, 900, 920] 
+      var n_repeats_of_original = 3
+      var acquisition_cycles = 3
+      var generalization_cycles = 0 
+      console.log('experiment not in demo version')
+    }
+    
     var stimulus_folder = "sound/"    
     var generalization_stimuli = [] 
-    
     var key_balance = 1*(Math.random()>0.5);
     var two_keys = ['p', 'q'] 
     var response_keys = [ two_keys[key_balance], two_keys[1*(!key_balance)]]
     var response_keys = two_keys
-    console.log('response:', response_keys, 'tones:', valence_tones)
-    
     var valence_types = ['positive', 'negative']
     var neutral_tones = [500] 
     var acquisition_trial_duration = 2500    
-    var acquisition_cycles = 3
-    var generalization_cycles = 0
-    var instrumental_prompt = '<div style="font-size:120%; bottom: 10px; font-weight:bold">For positive tones press "p" for negative tones press "q"</div>'
-    var helpless_prompt = '<div style="font-size:120%; bottom: 10px; font-weight:bold">helpless</div>' 
-    var generalization_prompt = '<div style="font-size:120%; bottom: 10px; font-weight:bold">Press "p" if you hear the positive tone, "q" if you heard the negative tone.<br><br>Otherwise press the space bar.</div>' 
+    var instrumental_prompt = "<div style='font-size:120%; bottom: 10px; font-weight:bold'>Press either 'p' or 'q' to increase your bonus (positive) or avoid loosing it (negative)</div>"
+    var helpless_prompt = "<div style='font-size:120%; bottom: 10px; font-weight:bold'>helpless</div>" 
+    var generalization_prompt = "<div style='font-size:120%; bottom: 10px; font-weight:bold'>If you hear the positive or negative tone, press the button associated with it (either 'p' or 'q')<br><br>Otherwise press the space bar.</div>" 
 
 
     /* GENERATE DATA FILE FOR GENERALIZATION STAGE */
     for (i_valence=0;i_valence<valence_tones.length;i_valence++){ 
       /* ADD VALENCE TONES -- currently 12.5% -- 14% in the paper */ 
-      n_repeats_of_original = 3
       for(i_originals=0;i_originals<n_repeats_of_original;i_originals++){
           generalization_stimuli.push({ stimulus: stimulus_folder+ (valence_tones[i_valence]),
                                         data:{ stage:'generalization', 
@@ -80,7 +90,6 @@
       }
     }
     /* ADD RANDO TONES -- removed everything around 100*/
-    randos = [480, 500, 520, 880, 900, 920] 
     for (i_ran=0;i_ran<randos.length;i_ran++){
       generalization_stimuli.push({ stimulus: stimulus_folder + randos[i_ran], 
                                     data: { stage:'generalization', 
@@ -114,20 +123,26 @@
       prompt: helpless_prompt,
       data: { stage: 'acquisition', correct_response: 'q', valence: 'negative', condition: "pavlovian", correct: false}
     }
- 
-    /* GENERATE DATA FOR THE ACQUISITION STAGE */
-    var acquisition_stimuli = [
-      /* 27% -- should be 25% */
-      positive_instrumental, positive_instrumental, positive_instrumental, 
-      /* 27% -- should be 25% */
-      negative_instrumental, negative_instrumental, negative_instrumental,
-      /* 27% -- should be 33% */
-      neutral_instrumental, neutral_instrumental, neutral_instrumental,  
-      /*  9% -- should be 10% */
-      positive_pavlovian, negative_pavlovian 
-    ];
-
-
+    
+    if (demo) {
+      var acquisition_stimuli = [positive_instrumental, 
+                                 negative_instrumental, 
+                                 positive_pavlovian, 
+                                 negative_pavlovian, 
+                                 neutral_instrumental]                           
+    } else {  
+      /* GENERATE DATA FOR THE ACQUISITION STAGE */
+      var acquisition_stimuli = [
+        /* 27% -- should be 25% */
+        positive_instrumental, positive_instrumental, positive_instrumental, 
+        /* 27% -- should be 25% */
+        negative_instrumental, negative_instrumental, negative_instrumental,
+        /* 27% -- should be 33% */
+        neutral_instrumental, neutral_instrumental, neutral_instrumental,  
+        /*  9% -- should be 10% */
+        positive_pavlovian, negative_pavlovian 
+      ];
+    }                                      
     /* GENERATE AUDIO FILE FOR PRELOADING */
     var audio = [] 
     for (i=0;i<generalization_stimuli.length;i++)
@@ -148,42 +163,42 @@
       "<div style='width:70%;transform:translateX(20%)'>"+
         "<p> " + 
         "<p style='font-size:160%'>There will be three kinds of sounds, which will all sound differently:<br></p>" + 
-          "<p><b>A Positive sound</b>: This is the only sound you'll earn money from. " + 
+          "<p><b>1) A Positive sound</b>: This is the only sound you'll earn money from. " + 
           "When you hear this sound, you'll have a small amount added to your bonus when you press the correct key; if you press the incorrect key you'll gain nothing.<p> " + 
-          "<p><b>A Negative sound</b>: This is the only sound you'll lose money from. " + 
+          "<p><b>2) A Negative sound</b>: This is the only sound you'll lose money from. " + 
           "When you hear this sound, you'll have a small amount removed from your bonus if you press the incorrect key; if you press the correct key you'll loose nothing.<p>" + 
-          "<p><b>A Neutral sound</b>: Nothing will happen when you hear this sound--you wont loose or gain money. Don't respond.</p></div>",  
-        "<p style='font-size:140%'>You'll have to learn which keys to press for the positive and negative sounds.</p>", 
+          "<p><b>3) A Neutral sound</b>: Nothing will happen when you hear this sound--you wont loose or gain money. Don't respond.</p></div>",  
+        "<p style='font-size:140%'>You'll have to learn the correct key to press for the positive and negative sounds.</p>", 
         "<div style='width:70%;transform:translateX(20%)'><p>" +  
-          "<p style='font-size:200%; '>The two keys you'll use to respond are <b>p</b> and <b>q</b>.</p>" + 
-          "<p>When you hear the positive sound and press 'p', you'll receive $" + bonus_amount  + ". If you are incorrect you wont receive any bonus. " +  
-            "When you hear the negative sound, if you press 'q' you wont loose any bonus. " + 
+          "<p style='font-size:160%; '>When you hear a sound, you can respond by pressing either '<b>p</b>' or '<b>q</b>'</p>" + 
+          "<p>When you hear the positive sound and press the correct key (either 'p' or 'q'), you'll receive $" + bonus_amount  + ". If you are incorrect you wont receive any bonus. " +  
+            "When you hear the negative sound and press the correct key (either 'q' or 'p') you wont loose any bonus. " + 
             "But if you press the incorrect key for the negative sound, you'll have $" + bonus_amount + " taken away from your total bonus. " +  
             "<br><br></div>",  
          "<div style='width:70%;transform:translateX(20%)'>" +  
-        "<p style='font-size:200%'>You'll have two seconds to respond to each sound.</p> " + 
+        "<p style='font-size:160%'>You'll have two seconds to respond to each sound</p> " + 
             "After each response, you'll receive feedback: the amount you earned or lost will be presented at the center of the screen. " + 
             "If you dont respond in two seconds, you'll be marked as incorrect and--depending on the trial--you'll either loose bonus, or wont gain any bonus. " + 
             "<br><br></div>" ,  
 
     "<div style='width:70%;transform:translateX(20%)'>"+ 
-        "<p style='font-size:150%'>Sometimes things will be different:</p>" + 
+        "<p style='font-size:150%'>Sometimes you wont be able to respond</p>" + 
         "<p>" + 
-          "Between sounds, this will be a prompt on on the screen, reminding you which buttons to press. " + 
+          "Between sounds, this will usually be a prompt on on the screen, reminding you which buttons to press. " + 
           "But sometimes, before you hear the next sound, you'll see this presented at the center of the screen:" + 
           "<br><br><br>" + 
         "<p style='font-weight:bold; font-size:120%'>helpless</p>" +  
         "<br>" + 
         "<p>" + 
-          "When you see this, you don't need to respond. One of two things will happen: " + 
+          "When you see this, you wont be able to respond. One of two things will happen: " + 
           "If a positive sound is played, you'll gain money. If a negative sound is played, you'll loose money."+ 
         "<br>" +
         "</p>" + 
       "</div>",  
-        "<div style='width:70%;transform:translateX(20%)'> " + 
+      "<div style='width:70%;transform:translateX(20%)'> " + 
         "<audio id='low_audio'><source src='sound/200' type='audio/mpeg'></audio> " + 
         "<audio id='high_audio'><source src='sound/920' type='audio/mpeg'></audio> " + 
-          "<p style='font-size:200%; font-weight:'>Testing the sound presentation</p>" +
+        "<p style='font-size:200%; font-weight:'>Testing the sound presentation</p>" +
         "<p> " + 
           "If you press the buttons below, you'll hear the kind of sounds that will be played throughout the experiment. " + 
         "</p> " +
@@ -191,9 +206,7 @@
           "<button onclick='play_low()' type='button' style='padding:10px; margin:10px 100px' >SOUND EXAMPLE A</button> " + 
           "<button onclick='play_high()' type='button' style='padding:10px; margin:10px 100px' >SOUND EXAMPLE B</button> " +  
         "</p>" + 
-        "<p>" + 
-          "If you can't hear these two sounds, try turning up the volume. If that doesn't work, you shouldn't accept this HIT: " + 
-          "<strong>If you can't hear these sounds, you wont be able to make any money in this experiment.</strong>"+ 
+        "<p> If you can't hear these two sounds, try turning up the volume. If that doesn't work, you return this HIT</p>" + 
       "</div> ", 
 
       "<div style='width:70%;transform:translateX(20%)'> " +
@@ -219,10 +232,10 @@
       type: "instructions",
       pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
-        "<p style='font-size:140%'>Now you'll begin the second part of the experiment</p>" + 
+        "<p style='font-size:140%'>Now you'll begin the second part of the experiment, which is different from the first.</p>" + 
         "<p>We'll play a sound, and you'll have to decide if it was either the positive or negative sound in the last section.</p>" + 
-        "If it was, you should press the key that sound was associated with (e.g. 'p' for positive, 'q' for negative). " + 
-        "If the sound you hear isn't the positive or negative tone--it's new--you'll press the '<b>space bar</b>'. " + 
+        "If it was, you should press the key that sound was associated with (either 'p' or 'q'). " + 
+        "If the sound you hear isn't the positive or negative tone (it's new) you'll press the '<b>space bar</b>'. " + 
         "Every time you get the answer right you'll receive a bonus of $" + generalization_bonus_amount + "</p></div>", 
       "<div style='width:70%;transform:translateX(20%)'><p>" + 
         "You wont loose money by getting an answer wrong, but you will loose A LOT of money ($0.20) if you don't respond within 2 seconds. " + 
@@ -231,7 +244,8 @@
         "instead we'll tell you how much bonus you earned at the end of this stage.</p></div>", 
       "<div style='width:70%;transform:translateX(20%)'><p>" +
        "Again the three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and the '<b>spacebar</b>'. " + 
-       "If you hear the positive sound from before, press 'p'. If you hear the negative sound from before, press 'q'. If it's a new sound, press the spacebar." +  
+       "If you hear the positive or negative sound from the first part of the experiment, press the key (either 'p' or 'q') associated with it. " + 
+       "If it's a new sound, press the spacebar." +  
        "Respond quickly, to avoid loosing your bonus, and the more accurate you are, the more bonus you'll earn! " + 
       "<p>" + 
       "<div>"],  
@@ -246,7 +260,7 @@
       pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
         "<p style='font-size:140%'>Now we're going to go back to the first part of the experiment.</p>" + 
-        "<p>The sounds and keys will be the same; for the positive sound you'll press 'p' to earn more money, for the negative sound you'll press 'q' to avoid loosing money." + 
+        "<p>The sounds and keys (either 'p' or 'q') will be the same; for the positive sound press the correct key to earn more money, for the negative sound press the correct key to avoid loosing money." + 
         "The more accurate you are, the more bonus you'll earn! " + 
       "<p>" + 
       "<div>"],  
@@ -366,7 +380,7 @@
       
         var key_press = jsPsych.data.get().last(1).values()[0]['key_press'];
         if (key_press==null) {
-          return "<p style='font-weight:bold; color: red; font-size=100%'> -$0.10 <br>RESPOND FASTER!</p>";
+          return "<p style='font-weight:bold; color: red; font-size=100%'> - $" + (bonus_amount  * 10).toFixed(2) + "<br>RESPOND FASTER!</p>";
           data.penalty = 1
         } else {
           return generalization_prompt
@@ -402,7 +416,7 @@
       
       stimulus: function() {
       
-        var positive_trials = jsPsych.data.get().filter({valence:'positive'}) 
+        var positive_trials = jsPsych.data.get().filter({valence:'positive', i_block:i_block}) 
         var positive_correct = positive_trials.filter({correct: true});
         var positive_accuracy = positive_correct.count() / positive_trials.count()
         var positive_bonus = positive_correct.count() * bonus_amount 
@@ -412,7 +426,7 @@
         var negative_accuracy = negative_correct.count() / negative_trials.count()
         var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
         console.log('negative bonus:', negative_bonus)
-        return "The total bonus amount of bonus you've earned so far is $" + Math.max(0, positive_bonus - negative_bonus).toFixed(2) + 
+        return "The total bonus amount of bonus you earned in this last period was $" + Math.max(0, positive_bonus - negative_bonus).toFixed(2) + 
         ".<br> Press any button to continue to the next step."
       }
     };
