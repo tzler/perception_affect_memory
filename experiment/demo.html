@@ -158,7 +158,7 @@
       "<p style='font-size:200%; font-weight:bold'>Welcome to our experiment!</p>" + 
         "<p style='font-size:120%'>We're interested how people learn to respond to new sounds in different ways.</p>"+ 
       "<p>Most of the money you earn in this experiment will be in the form of a bonus, which depends on your performance. " + 
-        "Make sure you really understand the instructions, or you wont be able to make any money!" +   
+        "Make sure you really understand the instructions, or you won't be able to make any money!" +   
       "</p>", 
       "<div style='width:70%;transform:translateX(20%)'>"+
         "<p> " + 
@@ -166,23 +166,23 @@
           "<p><b>1) A Positive sound</b>: This is the only sound you'll earn money from. " + 
           "When you hear this sound, you'll have a small amount added to your bonus when you press the correct key; if you press the incorrect key you'll gain nothing.<p> " + 
           "<p><b>2) A Negative sound</b>: This is the only sound you'll lose money from. " + 
-          "When you hear this sound, you'll have a small amount removed from your bonus if you press the incorrect key; if you press the correct key you'll loose nothing.<p>" + 
-          "<p><b>3) A Neutral sound</b>: Nothing will happen when you hear this sound--you wont loose or gain money. Don't respond.</p></div>",  
+          "When you hear this sound, you'll have a small amount removed from your bonus if you press the incorrect key; if you press the correct key you'll lose nothing.<p>" + 
+          "<p><b>3) A Neutral sound</b>: You don't need to respond to this tone, and you won't gain or lose money when you hear it.</p></div>",  
           "<p style='font-size:140%'>You'll have to learn which are the positive and negative sounds, <br>as well as the correct key for each of them.</p>", 
         "<div style='width:70%;transform:translateX(20%)'><p>" +  
           "<p style='font-size:160%; '>When you hear a sound, you can respond by pressing either '<b>p</b>' or '<b>q</b>'</p>" + 
-          "<p>When you hear the positive sound and press the correct key (either 'p' or 'q'), you'll receive $" + bonus_amount  + ". If you are incorrect you wont receive any bonus. " +  
-            "When you hear the negative sound and press the correct key (either 'q' or 'p') you wont loose any bonus. " + 
+          "<p>When you hear the positive sound and press the correct key (either 'p' or 'q'), you'll receive $" + bonus_amount  + ". If you are incorrect you won't receive any bonus. " +  
+            "When you hear the negative sound and press the correct key (either 'p' or 'q') you won't lose any bonus. " + 
             "But if you press the incorrect key for the negative sound, you'll have $" + bonus_amount + " taken away from your total bonus. " +  
             "<br><br></div>",  
          "<div style='width:70%;transform:translateX(20%)'>" +  
         "<p style='font-size:160%'>You'll have two seconds to respond to each sound</p> " + 
             "After each response, you'll receive feedback: the amount you earned or lost will be presented at the center of the screen. " + 
-            "If you dont respond in two seconds, you'll be marked as incorrect and--depending on the trial--you'll either loose bonus, or wont gain any bonus. " + 
+            "If you dont respond in two seconds, you'll be marked as incorrect and--depending on the trial--you'll either lose bonus, or won't gain any bonus. " + 
             "<br><br></div>" ,  
 
     "<div style='width:70%;transform:translateX(20%)'>"+ 
-        "<p style='font-size:150%'>Sometimes you wont be able to respond</p>" + 
+        "<p style='font-size:150%'>Sometimes you won't be able to respond</p>" + 
         "<p>" + 
           "Between sounds, this will usually be a prompt on on the screen, reminding you which key to press. " + 
           "But sometimes, before you hear the next sound, you'll see this presented at the center of the screen:" + 
@@ -190,8 +190,8 @@
         "<p style='font-weight:bold; font-size:120%'>helpless</p>" +  
         "<br>" + 
         "<p>" + 
-          "When you see this, you wont be able to respond. One of two things will happen: " + 
-          "If a positive sound is played, you'll gain money. If a negative sound is played, you'll loose money."+ 
+          "When you see this, you won't be able to respond. One of two things will happen: " + 
+          "If a positive sound is played, you'll gain money. If a negative sound is played, you'll lose money."+ 
         "<br>" +
         "</p>" + 
       "</div>",  
@@ -206,7 +206,7 @@
           "<button onclick='play_low()' type='button' style='padding:10px; margin:10px 100px' >SOUND EXAMPLE A</button> " + 
           "<button onclick='play_high()' type='button' style='padding:10px; margin:10px 100px' >SOUND EXAMPLE B</button> " +  
         "</p>" + 
-        "<p> If you can't hear these two sounds, try turning up the volume. If that doesn't work, you return this HIT</p>" + 
+        "<p> If you can't hear these two sounds, try turning up the volume. If that doesn't work, you should return this HIT</p>" + 
       "</div> ", 
 
       "<div style='width:70%;transform:translateX(20%)'> " +
@@ -230,21 +230,26 @@
 
     var generalization_instructions = {
       type: "instructions",
-      pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
+      pages: [
+       "<div style='width:70%;transform:translateX(20%)'>" + 
+      "<p>That was the end of PART ONE of the experiment. Now let's move on to PART TWO.</p>", 
+      "<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
-        "<p style='font-size:140%'>Now you'll begin the second part of the experiment, which is different from the first.</p>" + 
-        "<p>We'll play a sound, and you'll have to decide if it was either the positive or negative sound in the last section.</p>" + 
-        "If it was, you should press the key that sound was associated with (either 'p' or 'q'). " + 
-        "If the sound you hear isn't the positive or negative tone (it's new) you'll press the '<b>space bar</b>'. " + 
+        "<p style='font-size:140%'>Part two  of the experiment:</p>" + 
+        "<p>Just like before, you'll hear a sound. This time you have to ask yourself 'Was this the positive or negative sound I heard in part one?' </p>" + 
+        "If you heard either the positive or negative sound, you should press the key that sound was associated with (either 'p' or 'q'). " + 
+        "That is, if you hear the positive sound, press the key that would gain you money. If you hear the negative sound, press the key that would keep you from loosing money. " + 
+        "<br><br>If the sound you hear isn't the positive or negative sounds press the '<b>space bar</b>'. " + 
         "Every time you get the answer right you'll receive a bonus of $" + generalization_bonus_amount + "</p></div>", 
       "<div style='width:70%;transform:translateX(20%)'><p>" + 
-        "You wont loose money by getting an answer wrong, but you will loose A LOT of money ($0.20) if you don't respond within 2 seconds. " + 
+        "<p style='font-size:140%'>You have two seconds to respond</p>"+ 
+        "In part two, you wont get feedback after every response, like in part one. " + 
+        "You also won't lose money by getting an answer wrong. But you will lose A LOT of money ($0.20) if you don't respond within 2 seconds. " + 
         "If you take too long, red words will flash on the screen telling you to respond faster. " + 
-        "Otherwise, there's no feedback after each response (it's not like the last part); " + 
-        "instead we'll tell you how much bonus you earned at the end of this stage.</p></div>", 
+        "We'll stil tell you how much bonus you earned in this period when it's over.</p></div>", 
       "<div style='width:70%;transform:translateX(20%)'><p>" +
        "Again the three keys you can press throughout the experiment are '<b>p</b>', '<b>q</b>', and the '<b>spacebar</b>'. " + 
-       "If you hear the positive or negative sound from the first part of the experiment, press the key (either 'p' or 'q') associated with it. " + 
+       "If you hear the positive or negative sound from part one, press the key (either 'p' or 'q') associated with it. " + 
        "If it's a new sound, press the spacebar." +  
        " Respond quickly, to avoid loosing your bonus, and the more accurate you are, the more bonus you'll earn! " + 
       "<p>" + 
@@ -259,9 +264,9 @@
       type: "instructions",
       pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
-        "<p style='font-size:140%'>Now we're going to go back to the first part of the experiment.</p>" + 
-        "<p>The sounds and keys (either 'p' or 'q') will be the same; for the positive sound press the correct key to earn more money, for the negative sound press the correct key to avoid loosing money." + 
-        "The more accurate you are, the more bonus you'll earn! " + 
+        "<p style='font-size:140%'>Now we're going to repeat PART ONE of the experiment.</p>" + 
+        "<p>For the positive sound press the correct key to earn more money, for the negative sound press the correct key to avoid loosing money. The sounds and keys ('p' and 'q') are all the same. " + 
+        "Remember, the more accurate you are, the more bonus you'll earn! " + 
       "<p>" + 
       "<div>"],  
       post_trial_gap: 400,
@@ -275,8 +280,8 @@
       type: "instructions",
       pages: ["<div style='width:70%;transform:translateX(20%)'>" + 
       "<p>" + 
-        "<p style='font-size:140%'>Now we're going to go back to the second part of the experiment.</p>" + 
-        "<p>If the tone you hear is the positive sound, press 'p'. If the tone you hear is the negative sound, press 'q'. Otherwise, press the space bar." + 
+        "<p style='font-size:140%'>Now we're going to repeat PART TWO of the experiment.</p>" + 
+        "<p>If you hear the positive or negative sound played, press the key associated with that sound's correct response ('p' or 'q'). Otherwise, press the space bar." + 
         "The more accurate you are, the more bonus you'll earn! " + 
       "<p>" + 
       "<div>"],  
@@ -292,15 +297,15 @@
       choices: jsPsych.NO_KEYS,
       stimulus: '<div style="font-size:120%; top:20%"></div>',
       trial_duration: 1000, 
-      data: {test_part: 'fixation'},
+      data: {within_trial: jsPsych.timelineVariable('data')},
       prompt: jsPsych.timelineVariable('prompt'),
     }
    
     var generalization_reminder = {
       type: 'html-keyboard-response',
       choices: jsPsych.NO_KEYS,
-      stimulus: '<div style="font-size:120%; top:20%"></div>',
-      trial_duration: 1000, 
+      stimulus:'',  
+      trial_duration: 500, 
       data: {test_part: 'fixation'},
       prompt: jsPsych.timelineVariable('prompt'),
 
@@ -311,8 +316,16 @@
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q'],
       trial_duration: acquisition_trial_duration,
-      response_ends_trial: false,
-      post_trial_gap: 300, 
+      response_ends_trial: function() {
+        // end trial early, unless its a pavlovian trial
+        trial_condition = jsPsych.data.get().last(1).values()[0]['within_trial']
+        console.log(jsPsych.data.get().last(1).values()[0]['within_trial'])    
+        if (trial_condition == 'pavlovian'){
+          var end_with_response = false
+        } else { var end_with_response = true }
+        return end_with_response }, 
+      
+      post_trial_gap: 100, 
       prompt: jsPsych.timelineVariable('prompt'), 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
@@ -332,7 +345,7 @@
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q', 'space'],
       trial_duration: acquisition_trial_duration, 
-      response_ends_trial: false,
+      response_ends_trial: true,
       prompt: jsPsych.timelineVariable('prompt'), 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
@@ -357,7 +370,7 @@
         var valence = jsPsych.data.get().last(1).values()[0].valence
         if (valence=='positive') {
           if (last_trial_correct){  
-            return '<font size="100%" weight=bold> + $0.01 </font>';
+            return '<font size="100%" weight=bold> + $' + bonus_amount.toFixed(2) + '</font>';
           } else {
             return '<font size="100%" weight=bold> + $0.00 </font>'
           }
@@ -365,7 +378,7 @@
           if (last_trial_correct){  
             return '<font size="100%" weight=bold> - $0.00 </font>';
           } else {
-            return '<font size="100%" weight=bold> - $0.01 </font>'
+            return '<font size="100%" weight=bold> - $' + bonus_amount.toFixed(2) + '</font>'
           }
         } else {
           return '<font size="100%"></font>'
@@ -375,7 +388,7 @@
     var generalization_trial_check = {
       type: 'html-keyboard-response',
       choices: jsPsych.NO_KEYS, 
-      trial_duration: 1000, 
+      trial_duration: 1000,  
       stimulus: function(){
       
         var key_press = jsPsych.data.get().last(1).values()[0]['key_press'];
@@ -383,7 +396,7 @@
           return "<p style='font-weight:bold; color: red; font-size=100%'> - $" + (bonus_amount  * 10).toFixed(2) + "<br>RESPOND FASTER!</p>";
           data.penalty = 1
         } else {
-          return generalization_prompt
+          return ''
            data.penalty = 0 
         }
       }
@@ -481,15 +494,15 @@
 
     /* CREATE TIMELINE */
     var timeline = [
-                    /* INITIAL INSTRUCTIONS */ 
-                    instructions, 
+                    /* INITIAL INSTRUCTIONS 
+                    instructions,
                     
-                    /* FIRST ACQUISITION BLOCK */ 
+                    /* FIRST ACQUISITION BLOCK 
                     acquisition, 
                     acquisition_feedback, 
                   
-                    /* FIRST GENERALIZATION BLOCK */ 
-                    generalization_instructions,
+                    /* FIRST GENERALIZATION BLOCK 
+                    generalization_instructions, */
                     generalization,
                     generalization_feedback,
                     
