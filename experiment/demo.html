@@ -56,7 +56,7 @@
     var generalization_stimuli = [] 
     var key_balance = 1*(Math.random()>0.5);
     var two_keys = ['p', 'q'] 
-    var response_keys = [ two_keys[key_balance], two_keys[1*(!key_balance)]]
+    /* var response_keys = [ two_keys[key_balance], two_keys[1*(!key_balance)]] */
     var response_keys = two_keys
     var valence_types = ['positive', 'negative']
     var neutral_tones = [500] 
@@ -319,8 +319,8 @@
       response_ends_trial: function() {
         // end trial early, unless its a pavlovian trial
         trial_condition = jsPsych.data.get().last(1).values()[0]['within_trial']
-        console.log(jsPsych.data.get().last(1).values()[0]['within_trial'])    
-        if (trial_condition == 'pavlovian'){
+        console.log(jsPsych.data.get().last(1).values()[0]['within_trial']['condition'])    
+        if (trial_condition['condition'] == 'pavlovian'){
           var end_with_response = false
         } else { var end_with_response = true }
         return end_with_response }, 
@@ -494,15 +494,15 @@
 
     /* CREATE TIMELINE */
     var timeline = [
-                    /* INITIAL INSTRUCTIONS 
+                    /* INITIAL INSTRUCTIONS */
                     instructions,
                     
-                    /* FIRST ACQUISITION BLOCK 
+                    /* FIRST ACQUISITION BLOCK */
                     acquisition, 
                     acquisition_feedback, 
                   
-                    /* FIRST GENERALIZATION BLOCK 
-                    generalization_instructions, */
+                    /* FIRST GENERALIZATION BLOCK */
+                    generalization_instructions, 
                     generalization,
                     generalization_feedback,
                     

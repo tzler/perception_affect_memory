@@ -42,7 +42,7 @@ function save_trial_to_database(trial_data){
   }
   
   // send data to server to write to database
-  //console.log('single trial data that is saved to database:')
+  console.log('single trial data that is saved to database:')
   socket.emit('current_data', current_data);
   console.log(current_data)
 }
@@ -74,7 +74,7 @@ function save_experiment_to_database(trial_data){
     
     // send data to server to write to database
     socket.emit('current_data', current_data);
-    //console.log('experiment saved to database')
+    console.log('experiment saved to database')
     console.log(current_data)
 }
 
@@ -127,7 +127,6 @@ socket = io.connect();
 
   // set mturk details from the values we've extracted/will extract
   document.getElementById('hitForm').setAttribute('action', submission_url)
-  console.log('submission_url ', submission_url )//'assignment_id', GetAssignmentId()) 
   $('#assignmentId').val(GetAssignmentId());
 
 
