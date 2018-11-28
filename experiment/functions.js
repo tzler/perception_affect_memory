@@ -20,13 +20,14 @@ function exit_protocol() {
   
 }
 
-function save_trial_to_database(trial_data){
+function save_trial_to_database(trial_data, data_type){
 	
   current_data = {
     
     // data from this trial
     trial_data:trial_data, 
-    
+    data_type: data_type, 
+
     // mongo markers
     dbname: mongo_database_name,
     colname: mongo_collection_name,

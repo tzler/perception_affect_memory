@@ -10,6 +10,7 @@
     <script src="jspsych-6.0.5/plugins/jspsych-html-button-response.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-audio-keyboard-response.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-image-keyboard-response.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-survey-text.js"></script>
     <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     <script src="jspsych-6.0.5/plugins/jspsych-external-html.js"></script>
     <!-- node libraries -->
@@ -35,7 +36,7 @@
     var two_tones = [300, 700] 
     var valence_tones = [two_tones[tone_balance], two_tones[1*(!tone_balance)]]
     
-    var demo = 1
+    var demo = 0
     if (demo){
       var surround = [-100, -20]
       var randos = [] 
@@ -72,9 +73,9 @@
           generalization_stimuli.push({ stimulus: stimulus_folder+ (valence_tones[i_valence]),
                                         data:{ stage:'generalization', 
                                                correct_response:response_keys[i_valence], 
-                                               valence: valence_types[i_valence]}, 
+                                               valence: valence_types[i_valence], 
+                                               distance:0}, 
                                         prompt: generalization_prompt, 
-                                        distance: 0
           })
       }
       /* ADD SURROUND TONES -- currently 25% -- 29% in the paper */ 
@@ -82,21 +83,25 @@
         generalization_stimuli.push({ stimulus:stimulus_folder + (valence_tones[i_valence] + surround[i_gen]), 
                                       data: { stage:'generalization',
                                               correct_response:'space',
-                                              valence:valence_types[i_valence]},  
+                                              valence:valence_types[i_valence], 
+                                              distance: surround[i_gen]},  
                                       prompt: generalization_prompt, 
-                                      distance: surround[i_gen]
+                                      
         }) 
       }
     }
+
     /* ADD RANDO TONES -- removed everything around 100*/
     for (i_ran=0;i_ran<randos.length;i_ran++){
       generalization_stimuli.push({ stimulus: stimulus_folder + randos[i_ran], 
                                     data: { stage:'generalization', 
                                             correct_response:'space', 
-                                            valence:'control'}, 
+                                            valence:'control', 
+                                            distance:NaN}, 
                                     prompt: generalization_prompt
       })
     }
+    
     var positive_instrumental = {
       stimulus: stimulus_folder + valence_tones[0], 
       prompt: instrumental_prompt,
@@ -211,11 +216,14 @@
 
       "<div style='width:70%;transform:translateX(20%)'> " +
         "<br><br>" + 
-        "We expect this HIT to take about 10 minutes. If you perform really well, you can earn over $3.00. " + 
+        "We expect this HIT to take less than 20 minutes. If you perform well, you can earn over $3.00. " + 
         "Once the experiment starts it moves forward automatically, so you should only begin the HIT when you can focus on the task. " + 
         "Feel free to read over the instructions again if you're uncertain about anything. " + 
         "If you're ready to begin the experiment, click the button below to proceed."  +
-        "<br><br>" 
+        "<br><br>",
+        "<div style='width:70%;transform:translateX(20%)'> " +
+        "<p style='font-size:150%'>Statement of consent</p>" + 
+          "<p>By engaging in the following experiment, you are participating in a study being performed by cognitive scientists in the Stanford Department of Psychology. If you have questions about this research, please contact us at stanfordpsych251@gmail.com. You must be at least 18 years old to participate. Your participation in this research is voluntary. You may decline to answer any or all of the following questions. You may decline further participation, at any time, without adverse consequences. Your anonymity is assured; the researchers who have requested your participation will not receive any personal information about you. We have recently been made aware that your public Amazon.com profile can be accessed via your worker ID if you do not choose to opt out. If you would like to opt out of this feature, you may follow instructions available <a href='https://www.amazon.com/gp/help/customer/display.html?nodeId=16465241'>here</a></p>" 
         ], 
         
       show_clickable_nav: true,
@@ -242,7 +250,7 @@
         "<br><br>If the sound you hear isn't the positive or negative sounds press the '<b>space bar</b>'. " + 
         "Every time you get the answer right you'll receive a bonus of $" + generalization_bonus_amount + "</p></div>", 
       "<div style='width:70%;transform:translateX(20%)'><p>" + 
-        "<p style='font-size:140%'>You have two seconds to respond</p>"+ 
+        "<p style='font-size:140%'>You have two seconds to respond to each sound</p>"+ 
         "In part two, you wont get feedback after every response, like in part one. " + 
         "You also won't lose money by getting an answer wrong. But you will lose A LOT of money ($0.20) if you don't respond within 2 seconds. " + 
         "If you take too long, red words will flash on the screen telling you to respond faster. " + 
@@ -297,7 +305,7 @@
       choices: jsPsych.NO_KEYS,
       stimulus: '<div style="font-size:120%; top:20%"></div>',
       trial_duration: 1000, 
-      data: {within_trial: jsPsych.timelineVariable('data')},
+      data: {trial_info: jsPsych.timelineVariable('data')},
       prompt: jsPsych.timelineVariable('prompt'),
     }
    
@@ -306,7 +314,7 @@
       choices: jsPsych.NO_KEYS,
       stimulus:'',  
       trial_duration: 500, 
-      data: {test_part: 'fixation'},
+      data: {trial_info:jsPsych.timelineVariable('data')},
       prompt: jsPsych.timelineVariable('prompt'),
 
   }
@@ -316,10 +324,11 @@
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q'],
       trial_duration: acquisition_trial_duration,
-      response_ends_trial: function() {
+      response_ends_trial: function(data) {
         // end trial early, unless its a pavlovian trial
-        trial_condition = jsPsych.data.get().last(1).values()[0]['within_trial']
-        console.log(jsPsych.data.get().last(1).values()[0]['within_trial']['condition'])    
+        trial_condition = jsPsych.data.get().last(1).values()[0]['trial_info']
+        console.log(jsPsych.data.get().last(1).values()[0]['trial_info'])    
+        console.log(data)
         if (trial_condition['condition'] == 'pavlovian'){
           var end_with_response = false
         } else { var end_with_response = true }
@@ -337,10 +346,11 @@
         }
         data.i_block = i_block
         data.frequency = data.stimulus.slice(6, data.stimulus.length)
-        //save_trial_to_database(data)
+        save_trial_to_database(data)
       },
     }
-		var test = {
+
+    var test = {
       type: "audio-keyboard-response",
       stimulus: jsPsych.timelineVariable('stimulus'), 
       choices: ['p', 'q', 'space'],
@@ -349,11 +359,12 @@
       prompt: jsPsych.timelineVariable('prompt'), 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
+        console.log('data:', data)
         data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response)
   		  data.i_generalization_trial = i_generalization_trial
         i_generalization_trial = i_generalization_trial + 1
         data.i_block = i_block
-        //save_trial_to_database(data)
+        save_trial_to_database(data)
       }
     }
     console.log(document.getElementById('assignmentId'))
@@ -402,7 +413,6 @@
       }
     }
 
-
     var acquisition = {
       // for 2 out of every 10 of these should be "pavlovian":
       //    - fixation should say "helpless!"
@@ -443,7 +453,6 @@
         ".<br> Press any key to continue to the next step."
       }
     };
- 
 
     /* define debrief */
     var generalization_feedback = {
@@ -457,32 +466,45 @@
     };
 
     /* define debrief */
+    bonus_prompt = 0 
     var experiment_feedback = {
-      type: 'html-keyboard-response',
-      
-      stimulus: function() {
-        
-        var positive_trials = jsPsych.data.get().filter({valence:'positive', stage:'acquisition'}) 
-        var positive_correct = positive_trials.filter({correct: true});
-        var positive_accuracy = positive_correct.count() / positive_trials.count()
-        var positive_bonus = positive_correct.count() * bonus_amount 
+      type: 'survey-text',
+      preamble: function() {
+        short_debrief = "<div style='width:70%;transform:translateX(20%)'>" + 
+              "<br>The purpose of this experiment was to understand how valence (e.g. good and bad events) effects our perception and memory for events. " + 
+              "That's why we had the positive and negative tones: we wanted to know if you would remember them differently in the different stages of the experiment. " + 
+              "If you have questions about the experiment, feel free to send us an email!" + 
+              "</div>"  
+            var positive_trials = jsPsych.data.get().filter({valence:'positive', stage:'acquisition'}) 
+            var positive_correct = positive_trials.filter({correct: true});
+            var positive_accuracy = positive_correct.count() / positive_trials.count()
+            var positive_bonus = positive_correct.count() * bonus_amount 
 
-        console.log('positive bonus:', positive_bonus) 
-        var negative_trials = jsPsych.data.get().filter({valence:'negative', stage:'acquisition'}) 
-        var negative_correct = negative_trials.filter({correct: true});
-        var negative_accuracy = negative_correct.count() / negative_trials.count()
-        var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
-        console.log('negative bonus:', negative_bonus)
-        total_acquisition_bonus = Math.max(0, positive_bonus - negative_bonus)
-      
-        var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
-        total_generalization_bonus = all_correct * bonus_amount
+            console.log('positive bonus:', positive_bonus) 
+            var negative_trials = jsPsych.data.get().filter({valence:'negative', stage:'acquisition'}) 
+            var negative_correct = negative_trials.filter({correct: true});
+            var negative_accuracy = negative_correct.count() / negative_trials.count()
+            var negative_bonus = ( negative_trials.count() - negative_correct.count() )  * bonus_amount
+            console.log('negative bonus:', negative_bonus)
+            total_acquisition_bonus = Math.max(0, positive_bonus - negative_bonus)
+          
+            var all_correct = jsPsych.data.get().filter({stage:'generalization', correct:true}).count() 
+            total_generalization_bonus = all_correct * bonus_amount
+            total_bonus_amount_for_experiment = (total_acquisition_bonus + total_generalization_bonus).toFixed(2)
+            end_statement = "You're done! Your total reward during this experiment was  $"
+            bonus_info_to_workers = "<br>You should receive your bonus within 24 hours--if you dont, send us an email!"
+            return end_statement + total_bonus_amount_for_experiment}, 
+       
+      questions: [{ prompt: "We'd love to hear your thoughts about the experiment. Was it hard, easy, boring--is the bonus fair? <br>Any and all feedabck is helpful :)" , 
+                    rows: 10, 
+                    columns: 100}], 
 
-        return "That's it--you're done! Your total reward during this experiment was  $" + (total_acquisition_bonus + total_generalization_bonus).toFixed(2)  + " <br>Press any key to continue." 
-      },
-      on_load: function() { 
-
-        } 
+      button_label: "Continue to the 'Submit' button for mturk", 
+      on_finish:  function() { 
+        worker_feedback = jsPsych.data.get().last(1).values()[0]['responses']
+        data_to_save = {'worker_feedback':worker_feedback, 'total_bonus_earned':total_bonus_amount_for_experiment}
+        save_trial_to_database(data_to_save, 'feedback')
+      } 
     };
       
     var exit_slide = {
@@ -496,41 +518,22 @@
     var timeline = [
                     /* INITIAL INSTRUCTIONS */
                     instructions,
-                    
                     /* FIRST ACQUISITION BLOCK */
-                    acquisition, 
-                    acquisition_feedback, 
-                  
+                    acquisition, acquisition_feedback, 
                     /* FIRST GENERALIZATION BLOCK */
-                    generalization_instructions, 
-                    generalization,
-                    generalization_feedback,
-                    
+                    generalization_instructions, generalization, generalization_feedback,
                     /* SECOND ACQUISITION BLOCK */ 
-                    acquisition_return_instructions, 
-                    acquisition,  
-                    acquisition_feedback,
-                    
-                    /* SECOND GENERALIZATION BLOCK */ 
-                    generalization_return_instructions, 
-                    generalization, 
-                    generalization_feedback,
-
-                    /* ACQUISITION BLOCK */ 
-                    acquisition_return_instructions, 
-                    acquisition,  
-                    acquisition_feedback, 
-
-                    /* LAST GENERALIZATION BLOCK */
-                    generalization_return_instructions, 
-                    generalization, 
-                    generalization_feedback,
- 
+                    acquisition_return_instructions, acquisition, acquisition_feedback,
+                    /* SECOND GENERALIZATION BLOCK */
+                    generalization_return_instructions, generalization, generalization_feedback,
+                    /* FINAL ACQUISITION BLOCK */
+                    acquisition_return_instructions, acquisition,  acquisition_feedback, 
+                    /* FINAL GENERALIZATION BLOCK */
+                    generalization_return_instructions, generalization, generalization_feedback,
                     /* EXPERIMENT SUMMARY */
                     experiment_feedback,
     ];
    
-
     /* start the experiment */
     jsPsych.init({
       preload_audio: audio, 
@@ -540,8 +543,8 @@
         $('#hidden_submit').show()
       }
     });
-  </script>
 
+  </script>
 	<!-- BEGIN MTURK AND MONGO COMPATABILITY -->  
   <body>
     <!-- mturk compatability form -->
