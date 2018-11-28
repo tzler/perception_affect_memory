@@ -413,7 +413,6 @@
       }
     }
 
-
     var acquisition = {
       // for 2 out of every 10 of these should be "pavlovian":
       //    - fixation should say "helpless!"
@@ -454,7 +453,6 @@
         ".<br> Press any key to continue to the next step."
       }
     };
- 
 
     /* define debrief */
     var generalization_feedback = {
@@ -506,10 +504,7 @@
         worker_feedback = jsPsych.data.get().last(1).values()[0]['responses']
         data_to_save = {'worker_feedback':worker_feedback, 'total_bonus_earned':total_bonus_amount_for_experiment}
         save_trial_to_database(data_to_save, 'feedback')
-
       } 
-      
-
     };
       
     var exit_slide = {
@@ -523,42 +518,22 @@
     var timeline = [
                     /* INITIAL INSTRUCTIONS */
                     instructions,
-                    
                     /* FIRST ACQUISITION BLOCK */
-                    acquisition, 
-                    acquisition_feedback, 
-                  
+                    acquisition, acquisition_feedback, 
                     /* FIRST GENERALIZATION BLOCK */
-
-                    generalization_instructions, 
-                    generalization,
-                    generalization_feedback,
-                    
+                    generalization_instructions, generalization, generalization_feedback,
                     /* SECOND ACQUISITION BLOCK */ 
-                    acquisition_return_instructions, 
-                    acquisition,  
-                    acquisition_feedback,
-                    
+                    acquisition_return_instructions, acquisition, acquisition_feedback,
                     /* SECOND GENERALIZATION BLOCK */
-                    generalization_return_instructions, 
-                    generalization, 
-                    generalization_feedback,
-
+                    generalization_return_instructions, generalization, generalization_feedback,
                     /* FINAL ACQUISITION BLOCK */
-                    acquisition_return_instructions, 
-                    acquisition,  
-                    acquisition_feedback, 
-
+                    acquisition_return_instructions, acquisition,  acquisition_feedback, 
                     /* FINAL GENERALIZATION BLOCK */
-                    generalization_return_instructions, 
-                    generalization, 
-                    generalization_feedback,
- 
+                    generalization_return_instructions, generalization, generalization_feedback,
                     /* EXPERIMENT SUMMARY */
                     experiment_feedback,
     ];
    
-
     /* start the experiment */
     jsPsych.init({
       preload_audio: audio, 
@@ -568,8 +543,8 @@
         $('#hidden_submit').show()
       }
     });
-  </script>
 
+  </script>
 	<!-- BEGIN MTURK AND MONGO COMPATABILITY -->  
   <body>
     <!-- mturk compatability form -->
