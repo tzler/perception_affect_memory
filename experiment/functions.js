@@ -43,7 +43,7 @@ function save_trial_to_database(trial_data, data_type){
   }
   
   // send data to server to write to database
-  console.log('single trial data that is saved to database:')
+  //console.log('single trial data that is saved to database:')
   socket.emit('current_data', current_data);
   console.log(current_data)
 }

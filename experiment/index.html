@@ -47,7 +47,7 @@
     } else {
       var surround = [-100, -60, -20,  -5, 5, 20, 60, 100]
       var randos = [480, 500, 520, 880, 900, 920] 
-      var n_repeats_of_original = 3
+      var n_repeats_of_original = 4
       var acquisition_cycles = 3
       var generalization_cycles = 0
       console.log('experiment not in demo version')
@@ -327,8 +327,6 @@
       response_ends_trial: function(data) {
         // end trial early, unless its a pavlovian trial
         trial_condition = jsPsych.data.get().last(1).values()[0]['trial_info']
-        console.log(jsPsych.data.get().last(1).values()[0]['trial_info'])    
-        console.log(data)
         if (trial_condition['condition'] == 'pavlovian'){
           var end_with_response = false
         } else { var end_with_response = true }
@@ -359,7 +357,6 @@
       prompt: jsPsych.timelineVariable('prompt'), 
       data: jsPsych.timelineVariable('data'),
       on_finish: function(data){
-        console.log('data:', data)
         data.correct = data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode(data.correct_response)
   		  data.i_generalization_trial = i_generalization_trial
         i_generalization_trial = i_generalization_trial + 1
@@ -367,7 +364,6 @@
         save_trial_to_database(data, 'single_trial')
       }
     }
-    console.log(document.getElementById('assignmentId'))
     var feedback = {
       type: 'html-keyboard-response',
       choices: jsPsych.NO_KEYS,
