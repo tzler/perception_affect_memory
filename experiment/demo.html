@@ -28,15 +28,15 @@
     var i_block = 0 
     var i_acquisition_trial = 0 
     var i_generalization_trial = 0
-    var bonus_amount = 0.02
-    var generalization_bonus_amount = 0.02
+    var bonus_amount = 0.04
+    var generalization_bonus_amount = 0.04
     var generalization_data = { stage: 'generalization', correct_response: 'space', valence: ''}
     
     var tone_balance = 1*(Math.random()>0.5);
     var two_tones = [300, 700] 
     var valence_tones = [two_tones[tone_balance], two_tones[1*(!tone_balance)]]
     
-    var demo = 0
+    var demo = 1
     if (demo){
       var surround = [-100, -20]
       var randos = [] 
@@ -45,11 +45,11 @@
       var generalization_cycles = 0
       console.log('experiment in demo version')
     } else {
-      var surround = [-100, -20, -5, 5, 20, 100]
+      var surround = [-100, -60, -20,  -5, 5, 20, 60, 100]
       var randos = [480, 500, 520, 880, 900, 920] 
       var n_repeats_of_original = 3
       var acquisition_cycles = 3
-      var generalization_cycles = 0 
+      var generalization_cycles = 0
       console.log('experiment not in demo version')
     }
     
@@ -115,7 +115,7 @@
     var neutral_instrumental = {
       stimulus: stimulus_folder + neutral_tones[0], 
       prompt: instrumental_prompt, 
-      data: { stage: 'acquisition', correct_response: 'space', valence: 'neutral', condition: "instrumental" }
+      data: { stage: 'acquisition', correct_response: '', valence: 'neutral', condition: "instrumental" }
     };
     var positive_pavlovian = {
       stimulus: stimulus_folder + valence_tones[0], 
@@ -252,7 +252,7 @@
       "<div style='width:70%;transform:translateX(20%)'><p>" + 
         "<p style='font-size:140%'>You have two seconds to respond to each sound</p>"+ 
         "In part two, you wont get feedback after every response, like in part one. " + 
-        "You also won't lose money by getting an answer wrong. But you will lose A LOT of money ($0.20) if you don't respond within 2 seconds. " + 
+        "You also won't lose money by getting an answer wrong. But you will lose A LOT of money ($0.40) if you don't respond within 2 seconds. " + 
         "If you take too long, red words will flash on the screen telling you to respond faster. " + 
         "We'll stil tell you how much bonus you earned in this period when it's over.</p></div>", 
       "<div style='width:70%;transform:translateX(20%)'><p>" +
@@ -346,7 +346,7 @@
         }
         data.i_block = i_block
         data.frequency = data.stimulus.slice(6, data.stimulus.length)
-        save_trial_to_database(data)
+        save_trial_to_database(data, 'single_trial')
       },
     }
 
@@ -364,7 +364,7 @@
   		  data.i_generalization_trial = i_generalization_trial
         i_generalization_trial = i_generalization_trial + 1
         data.i_block = i_block
-        save_trial_to_database(data)
+        save_trial_to_database(data, 'single_trial')
       }
     }
     console.log(document.getElementById('assignmentId'))
@@ -413,7 +413,6 @@
       }
     }
 
-
     var acquisition = {
       // for 2 out of every 10 of these should be "pavlovian":
       //    - fixation should say "helpless!"
@@ -454,7 +453,6 @@
         ".<br> Press any key to continue to the next step."
       }
     };
- 
 
     /* define debrief */
     var generalization_feedback = {
@@ -506,10 +504,7 @@
         worker_feedback = jsPsych.data.get().last(1).values()[0]['responses']
         data_to_save = {'worker_feedback':worker_feedback, 'total_bonus_earned':total_bonus_amount_for_experiment}
         save_trial_to_database(data_to_save, 'feedback')
-
       } 
-      
-
     };
       
     var exit_slide = {
@@ -523,42 +518,22 @@
     var timeline = [
                     /* INITIAL INSTRUCTIONS */
                     instructions,
-                    
-                    /* FIRST ACQUISITION BLOCK */
-                    acquisition, 
-                    acquisition_feedback, 
-                  
+                    /* FIRST ACQUISITION BLOCK*/ 
+                    acquisition, acquisition_feedback, 
                     /* FIRST GENERALIZATION BLOCK */
-
-                    generalization_instructions, 
-                    generalization,
-                    generalization_feedback,
-                    
+                    generalization_instructions, generalization, generalization_feedback,
                     /* SECOND ACQUISITION BLOCK */ 
-                    acquisition_return_instructions, 
-                    acquisition,  
-                    acquisition_feedback,
-                    
+                    acquisition_return_instructions, acquisition, acquisition_feedback,
                     /* SECOND GENERALIZATION BLOCK */
-                    generalization_return_instructions, 
-                    generalization, 
-                    generalization_feedback,
-
+                    generalization_return_instructions, generalization, generalization_feedback,
                     /* FINAL ACQUISITION BLOCK */
-                    acquisition_return_instructions, 
-                    acquisition,  
-                    acquisition_feedback, 
-
+                    acquisition_return_instructions, acquisition,  acquisition_feedback, 
                     /* FINAL GENERALIZATION BLOCK */
-                    generalization_return_instructions, 
-                    generalization, 
-                    generalization_feedback,
- 
+                    generalization_return_instructions, generalization, generalization_feedback,
                     /* EXPERIMENT SUMMARY */
                     experiment_feedback,
     ];
    
-
     /* start the experiment */
     jsPsych.init({
       preload_audio: audio, 
@@ -568,8 +543,8 @@
         $('#hidden_submit').show()
       }
     });
-  </script>
 
+  </script>
 	<!-- BEGIN MTURK AND MONGO COMPATABILITY -->  
   <body>
     <!-- mturk compatability form -->
