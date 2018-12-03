@@ -69,8 +69,7 @@ The data preparation pipeline is going to be simplified because of how I'm savin
 
 Loading the data from the server in python: 
 
-```{python, importing trial information from mongo databse}
-
+```
 import json, pymongo, pandas
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -133,10 +132,8 @@ data = extract_data()
   
 # identify the hypothesis space within data we're (not) interested in 
 hypothesis_space = (data.stage=='generalization') & (data.valence != 'control').values
-  
-# annoyong: convert NaNs+NoneTypes from javascript into an R readable format after loading from python
-distance = [abs(int(i)) if (type(i)==float or type(i)==int) * (i==i) else -1 for i in data['distance']]
-key_press = [int(i) if (type(i)==float or type(i)==int) * (i==i) else -1 for i in data['key_press']]
+data['hypothesis_space'] = 1 * hypothesis_space
+data.to_csv('subject_data.csv')
 
 ```
 
@@ -144,15 +141,11 @@ Import data from python into R and clean up the data frame
 
 ```{r}
 
-# main import from python
-data = data.frame(py$data)
-
-# overwrite poorly formatted vectors
-data['distance'] = py$distance
-data['key_press'] = as.factor(py$key_press)
-
-# convert key presses to their corresponding valence associations
-data$association = revalue(data$key_press, c("-1"=NaN, '32'='novel','80'='positive', '81'='negative'))
+data = read.csv('subject_data.csv')  
+data$relative_distance = data$distance
+data$distance = abs(data$distance)
+data['key_press'] = as.factor(data$key_press)
+data$association = revalue(data$key_press, c('32'='novel','80'='positive', '81'='negative'))
 
 ```
 
@@ -161,7 +154,7 @@ The next step is critical for formatting the data: to determine whether the deci
 ```{r}
 
 # determine whether the decision valence matches the nearest valenced tone
-data$match = data$association == data$valence
+data$match = as.character(data$valence) == as.character(data$association)
 
 ```
 
@@ -176,7 +169,7 @@ To perform our primary confirmatory test, we will restrict our analysis to inclu
 
 ```{r}
 
-hypothesis_data = select(data, valence, distance, match, subject)[py$hypothesis_space,]
+hypothesis_space = select(data, valence, distance, match, subject)[data$hypothesis_space==1,]
 
 ```
 
@@ -184,7 +177,7 @@ Visualize the relationship between the proportion of errors distance from origin
 
 ```{r}
 
-hypothesis_data %>% 
+hypothesis_space %>% 
   group_by( valence, distance) %>% 
   summarise(p_identification = mean(match), 
             sem = sd(match)/sqrt(length(match)),
@@ -201,7 +194,7 @@ The primary question this replication hopes to address is "Are the slopes betwee
 
 ```{r}
 
-summary(lm('match ~ valence * distance', hypothesis_data))
+summary(lm('match ~ valence * distance', hypothesis_space))
 
 ```
 In this small sample (n=2), we replicate the interaction between the valence and distance. 
