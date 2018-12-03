@@ -1,0 +1,252 @@
+---
+title: "Replication of 'Negative Valence Widens Generalization of Learning' Schechtman et al. 2010 J.Neuro"
+author: "tyler bonnen (bonnen@stanford.edu)"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+---
+
+- [Project repository](https://github.com/tzler/experimental_methods/tree/master/schechtman2010)
+- [Original Paper](https://github.com/tzler/experimental_methods/blob/master/schechtman2010/original_paper.pdf)
+- [Demo (very few trials)](http://web.stanford.edu/~bonnen/auditory/experiment/demo.html)
+- [Full experiment](http://web.stanford.edu/~bonnen/auditory/experiment/index.html)
+
+```{r, setup, include=FALSE, warning=FALSE}
+library(reticulate)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(gridExtra)
+```
+
+## Introduction
+
+### Justification for replication
+
+Valence is among the principle constructs used to explain animal behavior; we tend towards things we like, away from what we don't. Remarkably, not much is known about how valence effects processes upstream of decision-making--e.g. memory and perception. <b>`Schechtman et al. 2010`</b> developed a paradigm in which auditory cues are paired with negative and positively valenced outcomes during an acquisition phase. During a generalization phase, they showed that subjects are more likely to confuse novel tones with the previous negative cue than the positive one. The authors discribe this result as differential perceptual generalization as a function of valence. 
+
+My hope is to build upon this core finding in order to study how these valenced processes interact with memory. By replicating this study in an online sample, I would be well positioned to iterate through paradigms, eventually converging on a study that will enable me to explore the relationship between valence and memory. 
+
+### Description of procedures
+
+There are two stages in this experiment which repeat; an <b>acquisition stage</b> and a <b>generalization stage.</b>
+
+##### Acquisition stage: 
+
+The are two main trail types in the acquisitino stage, instrumental and pavlovian. In the instrumental trials, subjects hear one of three auditory tones (300Hz, 500Hz, or 700Hz). This tone is presented for 200ms, and subjects have to learn the correct response for each tone type (e.g. either `p`, `q`, or `no response needed`). For the "positive" tone (either 300Hz or 700Hz, randomized across subjects), subjects are given a monetary reward when they press the correct key (e.g. `p`). They receive no reward otherwise. For the "negative" tone (the complimentary 300Hz or 700Hz tone), subjects are given a monetary penalty unless they press the correct key (e.g. `q`). That is, they receive no penalty only if they press the correct key. Subjects have 2500ms to register a response; if no key press is registered in this time, that trial is marked as 'incorrect'. For a third, "neutral" tone, the tone is presented, but subjects are not required to take any action. For all three tones, if a key is pressed before 2500ms, the trial ends. 
+
+For the pavlovian trials, subjects are first presented with the word "helpless" at the center of the screen. Then, either a positive or negative auditory tone is played. There is nothing subjects can do to change the outcome, and key presses will not end the trial (as is the case in the instrumental trials). 
+
+After all trials, subjects receive feedback, displayed at the center of the screen for 1000ms. For the positive and negative tones this is in the form of a monetary value (e.g. `+$0.02`, `-$0.02`, `-$0.00`, or `+$0.00`). For the neutral tone, the screen goes blank. At the end of each acquisition stage, subjects are given feedback about the aggregate bonus accrued in that stage. 
+
+##### Generalization stage: 
+
+Subjects are presented with the original three tones, as well as range of tones similar to the positive and negative tones (300 | 700 ± 5, 20, 60, and 100 Hz). There are also tones very dissimilar to those in the acquisition stage (480, 500, 520, 880, 900, or 920Hz). If the tone presented is either the original positive or negative tone in the acquisition stage, subjects are instructed to press the key that corresponded to that tone (`p` or `q`). Otherwise, they are instructed to press a third key (`spacebar`). Subjects are asked to respond within 2500ms and are rewarded for correct response within this time, though no feedback is given. If subjects do not respond within the alotted time, they are penalized, and given feedback and told that they will be heavily penalized (`-$0.20 RESPOND FASTER` presented at the center of the screen). This amount will actually not be taken out of subjects total bonus.  
+
+The acquisition and generalization stages are repeated until subjects have gone through three acquisition-generalization cycles. 
+
+### Differences from Original Study
+
+Because this study is based on performance, and chance-level performance would result in subjects receiving $0.00. This design incentives subjects to remain engaged in a way that is well suited for an online setting. Additionally, the resulting pattern of behavioral evidence will allow us to identify subjects who were not engaged (e.g. performance around chance). Any subjects who are not performing above 80% accuracy within the first block will be excluded from further analysis. 
+
+In principle, the currect javascript implimentation should not deviate in a meaningful way from the original study. Most importantly, the distribution of trial types and overall experimental length have been largely perserved, even when it is not critical for the main hypothesis; for example, the proportion of control trials is within several percentage points of the original study, not only the distribution of positive and negative instrumental and pavlovian trials. 
+
+The biggest deviation is the exclusion of several of the original control stimuli in the generalization phase. Two different auditory frequencies (e.g. 100 and 900Hz) must be played at different amplitudes in order to <em>sound like</em> they are being played at the same volume; typically, lower tones sound quieter, so the amplitude has to be greater. There was no calibration precedure the original authors used to ensure that tones of different frequencies were equally audible, and this seems to be acceptable for their laboratory setting. However, generating stimuli following their  procedure, and then playing those tones on laptops, it was no possible to hear the 80Hz tones. This group of controll tones around 100Hz (80, 100, 120) was excluded. 
+
+## Results 
+
+### Data preparation
+
+The data preparation pipeline is going to be simplified because of how I'm saving the data. For each trial, I'm saving the data to the server I'm running the experiment off of, and these data are already formatted for how the data will eventually be analyzed. In particular, in the generalization stage, the distance from the origina tone, valance, and key press are all recorded. And example trial's data looks like this: 
+
+```
+{"trial_data":{"rt":482,"stimulus":"sound/305","key_press":80,"stage":"generalization","correct_response":"space","valence":"positive","distance":5,"trial_type":"audio-keyboard-response","trial_index":136,"time_elapsed":35688961,"internal_node_id":"0.0-4.0-1.11","correct":false,"i_generalization_trial":11,"i_block":0},"data_type":"single_trial","dbname":"sleep_affect_memory","colname":"replication","iteration_name":"pilot0_251","context":"piloting","worker_id":"NONE","assignment_id":"NONE","hit_id":"NOPE","browser":"Chrome"}
+```
+
+Loading the data from the server in python: 
+
+```{python, importing trial information from mongo databse}
+
+import json, pymongo, pandas
+import numpy as np
+import matplotlib.pyplot as plt 
+import warnings; warnings.simplefilter('ignore')
+  
+auth_path = "/Users/biota/memory/sleep_affect_memory/experiment/.credentials/auth.json"
+  
+def connect_to_database(): 
+
+    # load credentials to access the database, connect, identify collection
+    data = json.load(open(auth_path))
+    mongo_tunnel = 'mongodb://' + data['user'] + ':' + data['password'] + '@127.0.0.1'
+    connection = pymongo.MongoClient(mongo_tunnel)
+    data_base = connection['sleep_affect_memory']
+    collection = data_base['replication']
+    
+    return collection
+    
+def identify_workers(collection):
+
+    # the second is my worker id
+    exclude = ['NONE', 'A33F2FVAMGJDGG']
+    all_workers = [i for i in collection.distinct('worker_id') if i not in exclude]
+    # extract workers who've completed entire experiment -- not returned HIT early
+    complete = [] 
+    for i_worker in all_workers: 
+        tmp_data = collection.find({'worker_id':i_worker})
+        if 'worker_feedback' in tmp_data[tmp_data.count()-1]['trial_data']: 
+            complete.append(i_worker)
+            
+    return complete
+    
+def extract_data(): 
+
+    # connect with mongo
+    collection = connect_to_database() 
+    # identify workers who completed experiment
+    worker_ids = identify_workers(collection)
+    # pret to remove worker identifiers 
+    subject_ids = {worker_ids[i]:i for i in range(len(worker_ids))}
+    # initialize data frame
+    subject_trial_data = pandas.DataFrame()
+    # iterate over workers 
+    for i_worker in worker_ids: 
+        # extract worker's data from mongo database
+        i_data = collection.find({'worker_id':i_worker})
+        # extract trial data
+        for one_trial in i_data: 
+            # only extract data we want 
+            if 'worker_feedback' not in one_trial['trial_data'].keys(): 
+                q = {i:one_trial['trial_data'][i] for i in list(one_trial['trial_data'].keys())}
+                # use anonymized worker identifier
+                q['subject'] = subject_ids[i_worker]
+                subject_trial_data = subject_trial_data.append(q, ignore_index=True)
+                
+    return subject_trial_data
+  
+# extract and format data from database
+data = extract_data()
+  
+# identify the hypothesis space within data we're (not) interested in 
+hypothesis_space = (data.stage=='generalization') & (data.valence != 'control').values
+  
+# annoyong: convert NaNs+NoneTypes from javascript into an R readable format after loading from python
+distance = [abs(int(i)) if (type(i)==float or type(i)==int) * (i==i) else -1 for i in data['distance']]
+key_press = [int(i) if (type(i)==float or type(i)==int) * (i==i) else -1 for i in data['key_press']]
+
+```
+
+Import data from python into R and clean up the data frame
+
+```{r}
+
+# main import from python
+data = data.frame(py$data)
+
+# overwrite poorly formatted vectors
+data['distance'] = py$distance
+data['key_press'] = as.factor(py$key_press)
+
+# convert key presses to their corresponding valence associations
+data$association = revalue(data$key_press, c("-1"=NaN, '32'='novel','80'='positive', '81'='negative'))
+
+```
+
+The next step is critical for formatting the data: to determine whether the decision matches the nearest valence. For the tones that were in the acquisition stage, this is going to give an estimate of accuracy. For other tones, this is going to tell us whether subjects were confusing novel tones with their valenced neighbors--basically, making errors. 
+
+```{r}
+
+# determine whether the decision valence matches the nearest valenced tone
+data$match = data$association == data$valence
+
+```
+
+### Confirmatory analysis
+
+To perform our primary confirmatory test, we will restrict our analysis to include the following information: 
+
+  1) generalization trials
+  2) 'positive' or 'negative' valenced tones (not controls)
+  3) distance of this tone to tones in the acquisition stage (0, 5, 20, 60, or 100Hz)
+
+
+```{r}
+
+hypothesis_data = select(data, valence, distance, match, subject)[py$hypothesis_space,]
+
+```
+
+Visualize the relationship between the proportion of errors distance from original tones and valence 
+
+```{r}
+
+hypothesis_data %>% 
+  group_by( valence, distance) %>% 
+  summarise(p_identification = mean(match), 
+            sem = sd(match)/sqrt(length(match)),
+            y_lower = p_identification-sem, 
+            y_upper = p_identification+sem) %>% 
+  ggplot(aes(x=distance, y=p_identification, color=valence)) + 
+    geom_line() + 
+    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), width=2) + 
+    ggtitle("'Generalization curve' averaged across 2 subjects in pilot B")
+
+```
+
+The primary question this replication hopes to address is "Are the slopes between the positive and negative key responses different?" Using an ANOVA this can be modeled as <b>`p(response) ~ distance * valence_type`</b>, where we expect the interaction term `distance * valence_type` to be significant. We also, expect the slope for the negative valence term to be less than the postive valence, signifying "wider generalization". 
+
+```{r}
+
+summary(lm('match ~ valence * distance', hypothesis_data))
+
+```
+In this small sample (n=2), we replicate the interaction between the valence and distance. 
+
+### Visualization summary statistics and engagement
+
+Visualize summary statistics for each of the 2 subjects in pilot B, as well as some quick checks on their engagement: 
+
+```{r, warning=FALSE, message=FALSE}
+
+acquisition_plot = data %>% 
+  filter(stage=='acquisition') %>% 
+  group_by(subject, i_block) %>% 
+  summarise(mean_accuracy=mean(correct)) %>% 
+  ggplot(aes(x=i_block, y=mean_accuracy, color=as.factor(subject))) + 
+    geom_line() + 
+    ggtitle("Block accuracy | Acquisition phase") + theme(legend.position="none")
+
+generalization_plot = data %>% 
+  filter(stage=='generalization') %>% 
+  group_by(subject, i_block) %>% 
+  summarise(mean_accuracy=mean(correct)) %>% 
+  ggplot(aes(x=i_block, y=mean_accuracy, color=as.factor(subject))) + 
+    geom_line() + 
+    ggtitle("Block accuracy | Generalization phase") + theme(legend.position="none")
+
+acquisition_keypress_plot = data %>% 
+  filter(stage=='acquisition', key_press!=-1) %>% 
+  ggplot(aes(x=i_acquisition_trial, y=key_press, color=as.factor(subject))) + 
+    geom_jitter(height=.1, alpha=.5) + 
+    scale_y_discrete(breaks=c("80", "81"), labels=c("positive", "negative")) + 
+    ggtitle("Distribution of key presses") + theme(legend.position="none")
+
+generalization_keypress_plot = data %>% 
+  filter(stage=='generalization', key_press!=-1) %>% 
+  ggplot(aes(x=i_generalization_trial, y=key_press, color=as.factor(subject))) + 
+    geom_jitter(height=.1, alpha=.5) + 
+    scale_y_discrete(breaks=c("80", "81", '32'), labels=c("positive", "negative", 'novel')) + 
+    ggtitle("Distribution of key presses") + theme(legend.position="none")
+
+grid.arrange(acquisition_plot, generalization_plot, acquisition_keypress_plot, generalization_keypress_plot, nrow = 2)
+```
+
+These data suggest that while subjects are not just distractedly responding with single key presses, their accuracy is far below ceiling.
+
+Considering the overall performance rates for subjects in this pilot, I would like to increase the bonus for each correct trial from $0.02 to $0.04 in the full replication. The bonus earned by participants in pilot B was ~$1.00 for ~20 minutes (they were subsequently paid an extra $1.00, so their total compensation for ~20 minutes in the study was $2.50). I hope that increasing the bonus further incentivizes performance on the task, which will lead to more effective learning, better test of the hypothesis, and a more equitable wage for workers. 
+
+#### Notes
