@@ -24,12 +24,12 @@
     function play_low() { document.getElementById("low_audio").play() } 
     function play_high() { document.getElementById("high_audio").play(); } 
      
-    var demo = 1
+    var demo = 0
     if (demo){
-      var surround = [-100, -20, 0, 20, 100]
+      var surround = [-100, -20, 20, 100]
       var randos = [] 
-      var n_repeats_of_original = 0
-      var acquisition_cycyles = 2
+      var n_repeats_of_original = 1
+      var acquisition_cycles = 2
       var generalization_cycles = 0
       console.log('experiment in demo version')
     } else {
