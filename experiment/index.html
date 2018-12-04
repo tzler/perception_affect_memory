@@ -61,7 +61,8 @@
     /* SET VALENCE-TONE-KEY MAPPING */
     var valence_key_map = {[valence_types[0]]:{'key':response_keys[0], 'tone': valence_tones[0]}, 
                            [valence_types[1]]: {'key':response_keys[1], 'tone':valence_tones[1]}}
-
+    
+    var key_map = {'q':81, 'p':80, 'space':32}
     var stimulus_folder = "sound/"    
     var generalization_stimuli = [] 
     var neutral_tones = [500] 
@@ -386,6 +387,13 @@
           i_acquisition_trial = i_acquisition_trial + 1
         }
         data.i_block = i_block
+        if (data.key_press && data.condition == 'instrumental' && data.valence!='neutral'){
+          data.valence_match = key_map[valence_key_map[data['valence']]['key']] == data.key_press
+        }
+        data.negative_tone = valence_key_map["negative"]['tone']
+        data_negative_key = valence_key_map["negative"]['key']
+        data.positive_tone = valence_key_map["positive"]['tone']
+        data.positive_key = valence_key_map["positive"]['key']
         data.frequency = data.stimulus.slice(6, data.stimulus.length)
         save_trial_to_database(data, 'single_trial')
       },
@@ -404,6 +412,14 @@
   		  data.i_generalization_trial = i_generalization_trial
         i_generalization_trial = i_generalization_trial + 1
         data.i_block = i_block
+        data.negative_tone = valence_key_map["negative"]['tone']
+        data_negative_key = valence_key_map["negative"]['key']
+        data.positive_tone = valence_key_map["positive"]['tone']
+        data.positive_key = valence_key_map["positive"]['key']
+        if (data.key_press && data.valence!='control'){
+          data.valence_match = key_map[valence_key_map[data['valence']]['key']] == data.key_press
+        }
+
         save_trial_to_database(data, 'single_trial')
       }
     }
@@ -557,9 +573,9 @@
     
     /* CREATE TIMELINE */
     var timeline = [
-                    /* ACQUISITION INSTRUCTIONS */
+                    /* ACQUISITION INSTRUCTIONS*/
                     instructions,
-                    /* FIRST ACQUISITION BLOCK */ 
+                    /* FIRST ACQUISITION BLOCK */
                     acquisition, acquisition_feedback, 
                     /* GENERALIZATION INSTRUCTIONS */
                     generalization_instructions, 
