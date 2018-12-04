@@ -41,56 +41,13 @@ try {
       io          = require('socket.io')(server);
 }
 
-
 var utils = require('./utils/sharedUtils.js');
 
 /////////////////////////////////////////////// INITIAL PROTOCOL ///////////////////////////////////////////
 
 app.get( '/*' , function( req, res ) {
-  
-  // extract from request to server (only returns worker_id for first ping) 
-  var id = req.query.workerId;
-  // specifics to this experiment
-	var database_name ='task_stream';
-  // dont exclude tylers 
-  //var repeat_workers = [] 
-  var repeat_workers = ['A33F2FVAMGJDGG']
-
-  /// IF workers have accepted, this only returns true once, otherwise false (multiple documents, previewing)
-  if (id != undefined){
-		// set parameters for the particular experiment we're in
-		if (req.originalUrl.indexOf('stimulus_response')>-1){
-			utils.determine_set_size();
-			collection_names = ['stimulus_response']
-    } else {
-			collection_names = ['match_to_sample']
-		}
-		
-    // brings 'participation_count' into the global workspace
-    utils.get_previous_participation(id, database_name, collection_names)   
-    // override for sleep_affect_memory for the time being
-    participation_count = 0
-     
-	  // check if subject has completed previous trials 
-    //////////////// remove this timeout by ACTUALLY coding in javascript :) ///////////////////// 
-    setTimeout(function() {
-      if (participation_count) {
-        // dont exclude anyone in 'repeat_workers' (e.g. tyler) 
-        if ( repeat_workers.indexOf(id) > -1 ) {
-          return utils.serveFile( req, res );
-        // otherwise, redirect workers to "you can't do this experiment twice!" page
-        } else {
-          return utils.handleDuplicate( req, res); 
-        }
-      // but if they're new, just let them pass
-      } else { 
-        return utils.serveFile( req, res );  
-      }
-    }, 500)
-  } else {
-  // and let everyone see the instructions if worker_id is undefined -- before they've accepted the HIT
+    
     return utils.serveFile(req, res); 
-  }
 })
 
 io.on('connection', function (socket) {

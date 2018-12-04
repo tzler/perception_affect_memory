@@ -1,9 +1,10 @@
 /// mongo details
+
 var mongo_database_name = 'sleep_affect_memory'
 var mongo_collection_name = 'replication'
-var iteration_name = 'pilot0_251' 
-
+var iteration_name = 'pilot_3' 
 var supported_browsers = ['Chrome']
+var context = 'acquisition'
 
 //////////////////////////////// POPULATE HTML //////////////////////////////////////////
 
@@ -27,23 +28,20 @@ function save_trial_to_database(trial_data, data_type){
     // data from this trial
     trial_data:trial_data, 
     data_type: data_type, 
-
     // mongo markers
     dbname: mongo_database_name,
     colname: mongo_collection_name,
     iteration_name: iteration_name,
+    context: context,
 
     // mturk info
-    context: 'piloting', // submission_type,
     worker_id: GetWorkerId(),
     assignment_id: GetAssignmentId(),
     hit_id: turkGetParam( 'hitId', "NOPE" ),
     browser: get_browser_type(), 
-  
   }
   
   // send data to server to write to database
-  //console.log('single trial data that is saved to database:')
   socket.emit('current_data', current_data);
   console.log(current_data)
 }

@@ -27,7 +27,7 @@ var handleInvalidID = function(req, res) {
 var checkPreviousParticipant = function(workerId, callback) {
   var p = {'worker_id': workerId};
   var postData = {
-    dbname: 'task_stream',
+    dbname: 'sleep_affect_memory',
     query: p,
     projection: {'_id': 1}
   };
@@ -95,7 +95,7 @@ function get_previous_participation(worker_id, database_name, collection_names){
         }
       });
     })
-		setTimeout(function(){console.log( '...', worker_id, 'has completed', participation_count, 'trials in the collections above')}, 100)
+		setTimeout(function(){console.log( '...', worker_id, 'has completed', participation_count, 'trials in the collections above')}, 500)
   }
 }
 
