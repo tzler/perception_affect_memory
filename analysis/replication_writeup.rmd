@@ -67,7 +67,7 @@ The data preparation pipeline is going to be simplified because of how I'm savin
 {"trial_data":{"rt":482,"stimulus":"sound/305","key_press":80,"stage":"generalization","correct_response":"space","valence":"positive","distance":5,"trial_type":"audio-keyboard-response","trial_index":136,"time_elapsed":35688961,"internal_node_id":"0.0-4.0-1.11","correct":false,"i_generalization_trial":11,"i_block":0},"data_type":"single_trial","dbname":"sleep_affect_memory","colname":"replication","iteration_name":"pilot0_251","context":"piloting","worker_id":"NONE","assignment_id":"NONE","hit_id":"NOPE","browser":"Chrome"}
 ```
 
-Loading the data from the server in python: 
+### Loading the data from the server in python: 
 
 ```
 import json, pymongo, pandas
@@ -130,9 +130,7 @@ def extract_data():
 # extract and format data from database
 data = extract_data()
   
-# identify the hypothesis space within data we're (not) interested in 
-hypothesis_space = (data.stage=='generalization') & (data.valence != 'control').values
-data['hypothesis_space'] = 1 * hypothesis_space
+# save 
 data.to_csv('subject_data.csv')
 
 ```
@@ -141,20 +139,22 @@ Import data from python into R and clean up the data frame
 
 ```{r}
 
-data = read.csv('subject_data.csv')  
-data$relative_distance = data$distance
-data$distance = abs(data$distance)
-data['key_press'] = as.factor(data$key_press)
-data$association = revalue(data$key_press, c('32'='novel','80'='positive', '81'='negative'))
+data = read.csv('subject_data.csv')
+
+generalization_data = data %>% 
+  filter(stage=='generalization') %>% 
+  mutate(association = ifelse(key_press==positive_key, 'positive', 
+                              ifelse(key_press==negative_key, 'negative', NaN)))
 
 ```
+
 
 The next step is critical for formatting the data: to determine whether the decision matches the nearest valence. For the tones that were in the acquisition stage, this is going to give an estimate of accuracy. For other tones, this is going to tell us whether subjects were confusing novel tones with their valenced neighbors--basically, making errors. 
 
 ```{r}
 
 # determine whether the decision valence matches the nearest valenced tone
-data$match = as.character(data$valence) == as.character(data$association)
+generalization_data$match = as.character(generalization_data$valence) == as.character(generalization_data$association)
 
 ```
 
@@ -166,10 +166,12 @@ To perform our primary confirmatory test, we will restrict our analysis to inclu
   2) 'positive' or 'negative' valenced tones (not controls)
   3) distance of this tone to tones in the acquisition stage (0, 5, 20, 60, or 100Hz)
 
-
 ```{r}
 
-hypothesis_space = select(data, valence, distance, match, subject)[data$hypothesis_space==1,]
+hypothesis_space = generalization_data %>% 
+  filter(stage=='generalization' & valence!='control')  %>%
+  mutate(distance = abs(distance)) %>% 
+  select(valence, distance, match, subject, correct, association)
 
 ```
 
@@ -179,14 +181,14 @@ Visualize the relationship between the proportion of errors distance from origin
 
 hypothesis_space %>% 
   group_by( valence, distance) %>% 
-  summarise(p_identification = mean(match), 
-            sem = sd(match)/sqrt(length(match)),
-            y_lower = p_identification-sem, 
-            y_upper = p_identification+sem) %>% 
-  ggplot(aes(x=distance, y=p_identification, color=valence)) + 
-    geom_line() + 
-    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), width=2) + 
-    ggtitle("'Generalization curve' averaged across 2 subjects in pilot B")
+  summarise(p_association = mean(match, na.rm = TRUE ), 
+            sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
+            y_lower = p_association-sem, 
+            y_upper = p_association+sem) %>% 
+  ggplot(aes(x=distance, y=p_association, fill=valence)) + 
+    geom_line(aes(color=valence), size=1) + 
+    geom_ribbon(aes(ymin=y_lower, ymax=y_upper), alpha=.2) + 
+    ggtitle("'Replication' of main finding (n=20)")
 
 ```
 
@@ -203,43 +205,106 @@ In this small sample (n=2), we replicate the interaction between the valence and
 
 Visualize summary statistics for each of the 2 subjects in pilot B, as well as some quick checks on their engagement: 
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
 
-acquisition_plot = data %>% 
+criterion = .60
+acq_acc = data %>% 
   filter(stage=='acquisition') %>% 
-  group_by(subject, i_block) %>% 
-  summarise(mean_accuracy=mean(correct)) %>% 
-  ggplot(aes(x=i_block, y=mean_accuracy, color=as.factor(subject))) + 
-    geom_line() + 
-    ggtitle("Block accuracy | Acquisition phase") + theme(legend.position="none")
+  group_by(subject) %>% 
+  summarise(acc=mean(correct)) %>% 
+  mutate(attending = acc>criterion)
 
-generalization_plot = data %>% 
-  filter(stage=='generalization') %>% 
-  group_by(subject, i_block) %>% 
-  summarise(mean_accuracy=mean(correct)) %>% 
-  ggplot(aes(x=i_block, y=mean_accuracy, color=as.factor(subject))) + 
-    geom_line() + 
-    ggtitle("Block accuracy | Generalization phase") + theme(legend.position="none")
+gen_acc = data %>% 
+  filter(stage=='generalization', distance==0) %>% 
+  group_by(subject) %>% 
+  summarise(acc=mean(correct)) %>% 
+  mutate(attending = acc>criterion)
 
-acquisition_keypress_plot = data %>% 
-  filter(stage=='acquisition', key_press!=-1) %>% 
-  ggplot(aes(x=i_acquisition_trial, y=key_press, color=as.factor(subject))) + 
-    geom_jitter(height=.1, alpha=.5) + 
-    scale_y_discrete(breaks=c("80", "81"), labels=c("positive", "negative")) + 
-    ggtitle("Distribution of key presses") + theme(legend.position="none")
+summary =  data.frame(subject=gen_acc$subject, 
+           acquisition_accuracy=acq_acc$acc, 
+           generalization_accuracy=gen_acc$acc, 
+           attending = as.factor(gen_acc$attending * acq_acc$attending))
 
-generalization_keypress_plot = data %>% 
-  filter(stage=='generalization', key_press!=-1) %>% 
-  ggplot(aes(x=i_generalization_trial, y=key_press, color=as.factor(subject))) + 
-    geom_jitter(height=.1, alpha=.5) + 
-    scale_y_discrete(breaks=c("80", "81", '32'), labels=c("positive", "negative", 'novel')) + 
-    ggtitle("Distribution of key presses") + theme(legend.position="none")
+ggplot(summary, aes(x=acquisition_accuracy, y=generalization_accuracy, color=attending)) + 
+  geom_point(size=3)
 
-grid.arrange(acquisition_plot, generalization_plot, acquisition_keypress_plot, generalization_keypress_plot, nrow = 2)
 ```
 
-These data suggest that while subjects are not just distractedly responding with single key presses, their accuracy is far below ceiling.
+```{r}
 
-Considering the overall performance rates for subjects in this pilot, I would like to increase the bonus for each correct trial from $0.02 to $0.04 in the full replication. The bonus earned by participants in pilot B was ~$1.00 for ~20 minutes (they were subsequently paid an extra $1.00, so their total compensation for ~20 minutes in the study was $2.50). I hope that increasing the bonus further incentivizes performance on the task, which will lead to more effective learning, better test of the hypothesis, and a more equitable wage for workers. 
+attention_check = filter(summary, attending==1)
+
+hypothesis_space %>% 
+  filter(subject %in% attention_check$subject) %>% 
+  #filter(subject==attention_check$subject[1]) %>% 
+  group_by( valence, distance) %>% 
+  summarise(p_association = mean(match, na.rm = TRUE ), 
+            sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
+            y_lower = p_association-sem, 
+            y_upper = p_association+sem) %>% 
+  ggplot(aes(x=distance, y=p_association, fill=valence)) + 
+    geom_line(aes(color=valence), size=1) + 
+    geom_ribbon(aes(ymin=y_lower, ymax=y_upper), alpha=.4) + 
+    ggtitle("Only subjects who passed a post-mortem attention check")
+
+```
+
+```{r}
+
+attention_check = filter(summary, attending==1)
+
+hypothesis_space %>% 
+  filter(subject==attention_check$subject[9]) %>% 
+  group_by( valence, distance) %>% 
+  summarise(p_association = mean(match, na.rm = TRUE ), 
+            sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
+            y_lower = p_association-sem, 
+            y_upper = p_association+sem) %>% 
+  ggplot(aes(x=distance, y=p_association, fill=valence)) + 
+    geom_ribbon(aes(ymin=y_lower, ymax=y_upper), alpha=.5) +
+    ggtitle("Only subjects who passed a post-mortem attention check")
+
+```
+
+
+
+```{r}
+
+attention_check_hypothesis = filter(hypothesis_space, subject %in% attention_check$subject)
+summary(lm('match ~ valence * distance', attention_check_hypothesis))
+
+```
+
+```{r}
+
+hypothesis_space %>% 
+  filter(correct==0) %>% 
+  group_by( valence, distance) %>% 
+  summarise(p_association = sum(association=='negative', na.rm = TRUE)) %>% 
+  ggplot(aes(x=distance, y=p_association, color=valence)) + geom_line()  + 
+  ylim(0, 110)
+            
+
+hypothesis_space %>% 
+  filter(correct==0) %>% 
+  group_by( valence, distance) %>% 
+  summarise(p_association = sum(association=='positive', na.rm = TRUE)) %>% 
+  ggplot(aes(x=distance, y=p_association, color=valence)) + geom_line() + 
+  ylim(0, 110)
+        
+```
+
+
+```{r}
+
+data %>%  
+  mutate(log_distance = as.factor(round(log(abs(distance+1))))) %>% 
+  filter(stage=='generalization' & valence=='positive '  & subject %in% attention_check$subject) %>% 
+  group_by(log_distance) %>% 
+  ggplot(aes(x=log_distance, y=rt, color=log_distance)) + 
+  geom_violin()  
+
+```
+
 
 #### Notes
