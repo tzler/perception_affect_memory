@@ -143,9 +143,14 @@ data = read.csv('subject_data.csv')
 
 generalization_data = data %>% 
   filter(stage=='generalization') %>% 
-  mutate(association = ifelse(key_press==positive_key, 'positive', 
-                              ifelse(key_press==negative_key, 'negative', NaN)))
-
+  
+  mutate(# determine reference tone for each trial
+         reference_tone = as.factor(tone - distance), 
+         # determine key press type (positive left or right)
+         hand_type = ifelse(positive_key==80, 0, 1),
+         # determine valence key press was associated with
+         association = ifelse(key_press==positive_key, 'positive', ifelse(key_press==negative_key, 'negative', NaN)))
+         
 ```
 
 
@@ -171,7 +176,15 @@ To perform our primary confirmatory test, we will restrict our analysis to inclu
 hypothesis_space = generalization_data %>% 
   filter(stage=='generalization' & valence!='control')  %>%
   mutate(distance = abs(distance)) %>% 
-  select(valence, distance, match, subject, correct, association)
+  select(valence, distance, match, subject, correct, association, rt, positive_key)
+
+```
+
+Main experimental test, looking for the interaction between distance and valence, predicting the response association (positive or negative) 
+
+```{r}
+
+summary(lm('match ~ valence * distance', hypothesis_space))
 
 ```
 
@@ -185,20 +198,50 @@ hypothesis_space %>%
             sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
             y_lower = p_association-sem, 
             y_upper = p_association+sem) %>% 
-  ggplot(aes(x=distance, y=p_association, fill=valence)) + 
-    geom_line(aes(color=valence), size=1) + 
-    geom_ribbon(aes(ymin=y_lower, ymax=y_upper), alpha=.2) + 
-    ggtitle("'Replication' of main finding (n=20)")
+  ggplot(aes(x=distance, y=p_association, color=valence)) + 
+    geom_line(aes(color=valence), size=1.5) + 
+    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), size=1) + 
+    ggtitle('A "Replication" of of Schechtman et al. 2010?')
 
 ```
 
-The primary question this replication hopes to address is "Are the slopes between the positive and negative key responses different?" Using an ANOVA this can be modeled as <b>`p(response) ~ distance * valence_type`</b>, where we expect the interaction term `distance * valence_type` to be significant. We also, expect the slope for the negative valence term to be less than the postive valence, signifying "wider generalization". 
 
 ```{r}
 
-summary(lm('match ~ valence * distance', hypothesis_space))
+data %>% 
+  filter(stage=='acquisition' & valence!='neutral' & i_acquisition_trial<33) %>% 
+  group_by(i_acquisition_trial, valence) %>% 
+  summarise(m1 = mean(correct), 
+            sem1 = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  mutate(q_trial = ifelse(i_acquisition_trial%%2, i_acquisition_trial-1, i_acquisition_trial)) %>% 
+  group_by(q_trial, valence) %>% 
+  summarise(m2=mean(m1), sem2=mean(sem1)) %>% 
+  ggplot(aes(x=q_trial, y=m2, color=valence)) + 
+    geom_line(size=1.5) + 
+    geom_errorbar(aes(ymin=m2-sem2, ymax=m2+sem2), size=1) + 
+    ggtitle('Learning curves across the first acquisition stage')
 
 ```
+
+```{r}
+
+hypothesis_space %>% 
+  group_by( valence, distance) %>% 
+  summarise(mean_rt = mean(rt, na.rm = TRUE ), 
+            sem = sd(rt, na.rm = TRUE)/sqrt(length(match)),
+            y_lower = mean_rt-sem, 
+            y_upper = mean_rt+sem) %>% 
+  ggplot(aes(x=distance, y=mean_rt, color=valence)) + 
+    geom_line(aes(color=valence), size=1.5) + 
+    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), size=1) + 
+    ggtitle('Distribution of reaction times')
+
+```
+
+
+
+The primary question this replication hopes to address is "Are the slopes between the positive and negative key responses different?" Using an ANOVA this can be modeled as <b>`p(response) ~ distance * valence_type`</b>, where we expect the interaction term `distance * valence_type` to be significant. We also, expect the slope for the negative valence term to be less than the postive valence, signifying "wider generalization". 
+
 In this small sample (n=2), we replicate the interaction between the valence and distance. 
 
 ### Visualization summary statistics and engagement
@@ -207,9 +250,10 @@ Visualize summary statistics for each of the 2 subjects in pilot B, as well as s
 
 ```{r}
 
-criterion = .60
+criterion = .75
+
 acq_acc = data %>% 
-  filter(stage=='acquisition') %>% 
+  filter(stage=='acquisition' & valence!='control') %>% 
   group_by(subject) %>% 
   summarise(acc=mean(correct)) %>% 
   mutate(attending = acc>criterion)
@@ -218,7 +262,7 @@ gen_acc = data %>%
   filter(stage=='generalization', distance==0) %>% 
   group_by(subject) %>% 
   summarise(acc=mean(correct)) %>% 
-  mutate(attending = acc>criterion)
+  mutate(attending = acc>0)
 
 summary =  data.frame(subject=gen_acc$subject, 
            acquisition_accuracy=acq_acc$acc, 
@@ -226,7 +270,8 @@ summary =  data.frame(subject=gen_acc$subject,
            attending = as.factor(gen_acc$attending * acq_acc$attending))
 
 ggplot(summary, aes(x=acquisition_accuracy, y=generalization_accuracy, color=attending)) + 
-  geom_point(size=3)
+  geom_point(size=3) + 
+  ggtitle('Selecting subjects who performed well in the acquisition stage (acc>.75%) ')
 
 ```
 
@@ -236,16 +281,151 @@ attention_check = filter(summary, attending==1)
 
 hypothesis_space %>% 
   filter(subject %in% attention_check$subject) %>% 
-  #filter(subject==attention_check$subject[1]) %>% 
   group_by( valence, distance) %>% 
   summarise(p_association = mean(match, na.rm = TRUE ), 
             sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
             y_lower = p_association-sem, 
             y_upper = p_association+sem) %>% 
-  ggplot(aes(x=distance, y=p_association, fill=valence)) + 
-    geom_line(aes(color=valence), size=1) + 
-    geom_ribbon(aes(ymin=y_lower, ymax=y_upper), alpha=.4) + 
-    ggtitle("Only subjects who passed a post-mortem attention check")
+  ggplot(aes(x=distance, y=p_association, color=valence)) + 
+    geom_line(aes(color=valence), size=1.5) + 
+    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), size=1) + 
+    ggtitle("Post-mortem attention check generalization curves")
+
+```
+
+```{r}
+
+attention_checked_hypothesis = filter(hypothesis_space, subject %in% attention_check$subject)
+summary(lm('match ~ valence * distance', attention_checked_hypothesis))
+
+```
+
+```{r}
+
+tone_data = generalization_data %>%
+  filter(is.finite(distance)  & stage=='generalization') %>% 
+  mutate(reference_tone = tone - distance, 
+         abs_distance = abs(distance), 
+         abs_log_tone_over_ref = abs(log(tone/reference_tone)), 
+         reference_tone = as.factor(reference_tone))
+
+```
+
+```{r}
+
+tone_data %>% 
+  group_by(abs_distance, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct), 
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+summary(lm('correct ~ abs(distance) + reference_tone', tone_data))
+
+```
+
+
+```{r}
+
+tone_data %>% 
+  filter(subject %in% attention_check$subject ) %>% 
+  group_by(abs_distance, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct), 
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+tone_data %>% 
+  filter(subject %in% attention_check$subject ) %>% 
+  group_by(distance, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct),
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=distance, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+tone_data %>% 
+  filter(subject %in% attention_check$subject ) %>% 
+  group_by(abs_log_tone_over_ref, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct),
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=abs_log_tone_over_ref, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+
+```
+
+
+```{r}
+
+tone_data_attending = tone_data[tone_data$subject %in% attention_check$subject,]
+
+summary(lm('correct ~ abs(distance) + reference_tone', tone_data_attending))
+
+```
+
+```{r}
+
+tone_data %>% 
+  filter(! subject %in% attention_check$subject ) %>% 
+  group_by(abs_distance, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct), 
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+tone_data %>% 
+  filter(! subject %in% attention_check$subject ) %>% 
+  group_by(distance, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct),
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=distance, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+tone_data %>% 
+  filter(! subject %in% attention_check$subject ) %>% 
+  group_by(abs_log_tone_over_ref, reference_tone) %>% 
+  filter(reference_tone==reference_tone) %>% 
+  summarise(avg_correct = mean(correct),
+            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+  ggplot(aes(x=abs_log_tone_over_ref, y=avg_correct, color=reference_tone)) + 
+  geom_line() + 
+  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+
+
+```
+
+```{r}
+
+tone_data_unattending = tone_data[!tone_data$subject %in% attention_check$subject,]
+
+summary(lm('correct ~ abs(distance) + reference_tone', tone_data_unattending))
+
+```
+
+```{r}
+
+data %>% 
+  filter(stage=='acquisition'&condition=='instrumental'&i_block==0)%>%
+  mutate(correct= as.factor(correct)) %>% 
+  group_by(valence, condition, correct) %>% 
+  summarise(mean_rt = mean(rt, na.rm = TRUE ), 
+            sem = sd(rt, na.rm = TRUE)) %>% 
+  ggplot(aes(x=valence, y=mean_rt, color=correct)) + 
+    geom_point(size=5) + 
+    geom_errorbar(aes(ymin=mean_rt-sem, ymax=mean_rt+sem, width=.2)) + 
+    ggtitle('Average response time during the first acquisition stage')
 
 ```
 
@@ -254,55 +434,19 @@ hypothesis_space %>%
 attention_check = filter(summary, attending==1)
 
 hypothesis_space %>% 
-  filter(subject==attention_check$subject[9]) %>% 
-  group_by( valence, distance) %>% 
+  mutate(hand_type = ifelse(positive_key==80, 'pos_right', 'pos_left')) %>% 
+  filter(subject %in% attention_check$subject) %>% 
+  group_by( valence, distance, subject) %>% 
   summarise(p_association = mean(match, na.rm = TRUE ), 
             sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
             y_lower = p_association-sem, 
             y_upper = p_association+sem) %>% 
-  ggplot(aes(x=distance, y=p_association, fill=valence)) + 
-    geom_ribbon(aes(ymin=y_lower, ymax=y_upper), alpha=.5) +
-    ggtitle("Only subjects who passed a post-mortem attention check")
-
-```
-
-
-
-```{r}
-
-attention_check_hypothesis = filter(hypothesis_space, subject %in% attention_check$subject)
-summary(lm('match ~ valence * distance', attention_check_hypothesis))
-
-```
-
-```{r}
-
-hypothesis_space %>% 
-  filter(correct==0) %>% 
-  group_by( valence, distance) %>% 
-  summarise(p_association = sum(association=='negative', na.rm = TRUE)) %>% 
-  ggplot(aes(x=distance, y=p_association, color=valence)) + geom_line()  + 
-  ylim(0, 110)
-            
-
-hypothesis_space %>% 
-  filter(correct==0) %>% 
-  group_by( valence, distance) %>% 
-  summarise(p_association = sum(association=='positive', na.rm = TRUE)) %>% 
-  ggplot(aes(x=distance, y=p_association, color=valence)) + geom_line() + 
-  ylim(0, 110)
-        
-```
-
-
-```{r}
-
-data %>%  
-  mutate(log_distance = as.factor(round(log(abs(distance+1))))) %>% 
-  filter(stage=='generalization' & valence=='positive '  & subject %in% attention_check$subject) %>% 
-  group_by(log_distance) %>% 
-  ggplot(aes(x=log_distance, y=rt, color=log_distance)) + 
-  geom_violin()  
+  ggplot(aes(x=distance, y=p_association, color=valence)) + 
+    geom_line(aes(color=valence), size=1) + 
+    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), width=2) + 
+    ggtitle("Only subjects who passed a post-mortem attention check") + 
+    facet_grid(rows=vars(subject)) + 
+    theme(plot.title = element_text(size = 10))
 
 ```
 
