@@ -10,7 +10,7 @@ credential_location = '../credentials/'
 rootkey = 'auth.json'
 directory_location = '..'
 n_hours_to_complete_hit = 1
-n_hours_to_accept_hit = 2
+n_hours_to_accept_hit = 3
 
 # send info about inputs if they're aren't enough
 if len(sys.argv) < 3:
@@ -26,7 +26,6 @@ else: # make sure data are formated correctely, and we're in the right context
     context =  sys.argv[1]
     n_hits = int(sys.argv[2])
     compensation_amount = sys.argv[3]
-        
     
     if (context == 'live') or (context == 'sandbox'):
 
@@ -68,8 +67,8 @@ def generate_hit_info(context, compensation_amount, i_hits_per_subsubmission):
     hit_info = {} 
     # mongo info 
     hit_info['database'] = 'sleep_affect_memory'
-    hit_info['collection'] = '251'
-    hit_info['iteration_name'] = 'pilot1'
+    hit_info['collection'] = 'replication'
+    hit_info['iteration_name'] = 'replication_pilot'
     hit_info['time_of_submission'] = datetime.datetime.now().strftime("%H:%M_%m_%d_%Y")
     hit_info['platform'] = context
     # mturk description info 
@@ -77,7 +76,7 @@ def generate_hit_info(context, compensation_amount, i_hits_per_subsubmission):
     #hit_info['external_url'] = "167.99.111.118:8881/%s/index.html"%(task_name)
     hit_info['keywords'] = ['sounds', 'psychology', 'neuroscience', 'experiment', 'research']
     hit_info['title'] = 'Learning to respond to different sounds' 
-    hit_info['description'] = "A simple experiment where you learn through trial and error; it's possible to earn up to $3 in 10 minutes"
+    hit_info['description'] = "A simple experiment where you learn through trial and error; earn over $3 in less than 15 minutes"
     # payment and bonus info
     hit_info['payment_for_experiment'] = compensation_amount 
     # mturk interface and worker details 

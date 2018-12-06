@@ -9,7 +9,6 @@ output:
     toc_float:
       collapsed: false
 ---
-
 - [Project repository](https://github.com/tzler/experimental_methods/tree/master/schechtman2010)
 - [Original Paper](https://github.com/tzler/experimental_methods/blob/master/schechtman2010/original_paper.pdf)
 - [Demo (very few trials)](http://web.stanford.edu/~bonnen/auditory/experiment/demo.html)
@@ -20,22 +19,23 @@ library(reticulate)
 library(ggplot2)
 library(plyr)
 library(dplyr)
-library(gridExtra)
+#library(gridExtra)
+library(cowplot)
 ```
 
-## Introduction
+# Introduction
 
-### Justification for replication
+## Justification for replication
 
 Valence is among the principle constructs used to explain animal behavior; we tend towards things we like, away from what we don't. Remarkably, not much is known about how valence effects processes upstream of decision-making--e.g. memory and perception. <b>`Schechtman et al. 2010`</b> developed a paradigm in which auditory cues are paired with negative and positively valenced outcomes during an acquisition phase. During a generalization phase, they showed that subjects are more likely to confuse novel tones with the previous negative cue than the positive one. The authors discribe this result as differential perceptual generalization as a function of valence. 
 
 My hope is to build upon this core finding in order to study how these valenced processes interact with memory. By replicating this study in an online sample, I would be well positioned to iterate through paradigms, eventually converging on a study that will enable me to explore the relationship between valence and memory. 
 
-### Description of procedures
+## Description of procedures
 
 There are two stages in this experiment which repeat; an <b>acquisition stage</b> and a <b>generalization stage.</b>
 
-##### Acquisition stage: 
+#### Acquisition stage: 
 
 The are two main trail types in the acquisitino stage, instrumental and pavlovian. In the instrumental trials, subjects hear one of three auditory tones (300Hz, 500Hz, or 700Hz). This tone is presented for 200ms, and subjects have to learn the correct response for each tone type (e.g. either `p`, `q`, or `no response needed`). For the "positive" tone (either 300Hz or 700Hz, randomized across subjects), subjects are given a monetary reward when they press the correct key (e.g. `p`). They receive no reward otherwise. For the "negative" tone (the complimentary 300Hz or 700Hz tone), subjects are given a monetary penalty unless they press the correct key (e.g. `q`). That is, they receive no penalty only if they press the correct key. Subjects have 2500ms to register a response; if no key press is registered in this time, that trial is marked as 'incorrect'. For a third, "neutral" tone, the tone is presented, but subjects are not required to take any action. For all three tones, if a key is pressed before 2500ms, the trial ends. 
 
@@ -43,13 +43,13 @@ For the pavlovian trials, subjects are first presented with the word "helpless" 
 
 After all trials, subjects receive feedback, displayed at the center of the screen for 1000ms. For the positive and negative tones this is in the form of a monetary value (e.g. `+$0.02`, `-$0.02`, `-$0.00`, or `+$0.00`). For the neutral tone, the screen goes blank. At the end of each acquisition stage, subjects are given feedback about the aggregate bonus accrued in that stage. 
 
-##### Generalization stage: 
+#### Generalization stage: 
 
 Subjects are presented with the original three tones, as well as range of tones similar to the positive and negative tones (300 | 700 ± 5, 20, 60, and 100 Hz). There are also tones very dissimilar to those in the acquisition stage (480, 500, 520, 880, 900, or 920Hz). If the tone presented is either the original positive or negative tone in the acquisition stage, subjects are instructed to press the key that corresponded to that tone (`p` or `q`). Otherwise, they are instructed to press a third key (`spacebar`). Subjects are asked to respond within 2500ms and are rewarded for correct response within this time, though no feedback is given. If subjects do not respond within the alotted time, they are penalized, and given feedback and told that they will be heavily penalized (`-$0.20 RESPOND FASTER` presented at the center of the screen). This amount will actually not be taken out of subjects total bonus.  
 
 The acquisition and generalization stages are repeated until subjects have gone through three acquisition-generalization cycles. 
 
-### Differences from Original Study
+## Differences from Original Study
 
 Because this study is based on performance, and chance-level performance would result in subjects receiving $0.00. This design incentives subjects to remain engaged in a way that is well suited for an online setting. Additionally, the resulting pattern of behavioral evidence will allow us to identify subjects who were not engaged (e.g. performance around chance). Any subjects who are not performing above 80% accuracy within the first block will be excluded from further analysis. 
 
@@ -57,104 +57,61 @@ In principle, the currect javascript implimentation should not deviate in a mean
 
 The biggest deviation is the exclusion of several of the original control stimuli in the generalization phase. Two different auditory frequencies (e.g. 100 and 900Hz) must be played at different amplitudes in order to <em>sound like</em> they are being played at the same volume; typically, lower tones sound quieter, so the amplitude has to be greater. There was no calibration precedure the original authors used to ensure that tones of different frequencies were equally audible, and this seems to be acceptable for their laboratory setting. However, generating stimuli following their  procedure, and then playing those tones on laptops, it was no possible to hear the 80Hz tones. This group of controll tones around 100Hz (80, 100, 120) was excluded. 
 
-## Results 
+# Data preparation 
 
-### Data preparation
+## Server side data preparation and loading with python
 
-The data preparation pipeline is going to be simplified because of how I'm saving the data. For each trial, I'm saving the data to the server I'm running the experiment off of, and these data are already formatted for how the data will eventually be analyzed. In particular, in the generalization stage, the distance from the origina tone, valance, and key press are all recorded. And example trial's data looks like this: 
-
-```
-{"trial_data":{"rt":482,"stimulus":"sound/305","key_press":80,"stage":"generalization","correct_response":"space","valence":"positive","distance":5,"trial_type":"audio-keyboard-response","trial_index":136,"time_elapsed":35688961,"internal_node_id":"0.0-4.0-1.11","correct":false,"i_generalization_trial":11,"i_block":0},"data_type":"single_trial","dbname":"sleep_affect_memory","colname":"replication","iteration_name":"pilot0_251","context":"piloting","worker_id":"NONE","assignment_id":"NONE","hit_id":"NOPE","browser":"Chrome"}
-```
-
-### Loading the data from the server in python: 
+The data are formatted serverside, prior to the data analysis here, to aid with data preprocessing. Below is an example generalization trial's format: 
 
 ```
-import json, pymongo, pandas
-import numpy as np
-import matplotlib.pyplot as plt 
-import warnings; warnings.simplefilter('ignore')
-  
-auth_path = "/Users/biota/memory/sleep_affect_memory/experiment/.credentials/auth.json"
-  
-def connect_to_database(): 
-
-    # load credentials to access the database, connect, identify collection
-    data = json.load(open(auth_path))
-    mongo_tunnel = 'mongodb://' + data['user'] + ':' + data['password'] + '@127.0.0.1'
-    connection = pymongo.MongoClient(mongo_tunnel)
-    data_base = connection['sleep_affect_memory']
-    collection = data_base['replication']
-    
-    return collection
-    
-def identify_workers(collection):
-
-    # the second is my worker id
-    exclude = ['NONE', 'A33F2FVAMGJDGG']
-    all_workers = [i for i in collection.distinct('worker_id') if i not in exclude]
-    # extract workers who've completed entire experiment -- not returned HIT early
-    complete = [] 
-    for i_worker in all_workers: 
-        tmp_data = collection.find({'worker_id':i_worker})
-        if 'worker_feedback' in tmp_data[tmp_data.count()-1]['trial_data']: 
-            complete.append(i_worker)
-            
-    return complete
-    
-def extract_data(): 
-
-    # connect with mongo
-    collection = connect_to_database() 
-    # identify workers who completed experiment
-    worker_ids = identify_workers(collection)
-    # pret to remove worker identifiers 
-    subject_ids = {worker_ids[i]:i for i in range(len(worker_ids))}
-    # initialize data frame
-    subject_trial_data = pandas.DataFrame()
-    # iterate over workers 
-    for i_worker in worker_ids: 
-        # extract worker's data from mongo database
-        i_data = collection.find({'worker_id':i_worker})
-        # extract trial data
-        for one_trial in i_data: 
-            # only extract data we want 
-            if 'worker_feedback' not in one_trial['trial_data'].keys(): 
-                q = {i:one_trial['trial_data'][i] for i in list(one_trial['trial_data'].keys())}
-                # use anonymized worker identifier
-                q['subject'] = subject_ids[i_worker]
-                subject_trial_data = subject_trial_data.append(q, ignore_index=True)
-                
-    return subject_trial_data
-  
-# extract and format data from database
-data = extract_data()
-  
-# save 
-data.to_csv('subject_data.csv')
-
+{'trial_data': {'rt': 602,
+                'stimulus': 'sound/705',
+                'key_press': 32,
+                'stage': 'generalization',
+                'correct_response': 'space',
+                'tone': 705,
+                'valence': 'negative',
+                'distance': 5,
+                'trial_type': 'audio-keyboard-response',
+                'trial_index': 362,
+                'time_elapsed': 446767,
+                'internal_node_id': '0.0-10.0-1.22',
+                'correct': True,
+                'i_generalization_trial': 52,
+                'i_block': 1},
+ 'data_type': 'single_trial',
+ 'iteration_name': 'pilot_3',
+ 'context': 'acquisition',
+ 'worker_id': 'yy',
+ 'assignment_id': 'xx',
+ 'hit_id': 'xxyy',
+ 'browser': 'Chrome'}
 ```
 
-Import data from python into R and clean up the data frame
+Scripts use to extract data from server are in python `mongo_data_extraction.py`, which outputs `subject_data.csv`
+
+### Preprocessing
+
+Import data from python into R, add analysis-related columns  
 
 ```{r}
 
+# import data from server, generated by mongo_data_extraction.py
 data = read.csv('subject_data.csv')
 
+# extract data from generalization stages
 generalization_data = data %>% 
   filter(stage=='generalization') %>% 
-  
   mutate(# determine reference tone for each trial
          reference_tone = as.factor(tone - distance), 
-         # determine key press type (positive left or right)
-         hand_type = ifelse(positive_key==80, 0, 1),
-         # determine valence key press was associated with
+         # determine valence key press was associated with -- conditional because tone-valence-key pairings are randomized
          association = ifelse(key_press==positive_key, 'positive', ifelse(key_press==negative_key, 'negative', NaN)))
          
 ```
 
+The next step is critical: to determine whether the decision subjects made (e.g. pressing p or q) <b>matches</b> the valence nearest to the tone they hear. That is, if 300Hz is the positive tone in the acquisition stage, which is associated with 'p', and they heard a 305Hz tone, did they press 'p'? For the tones that were in the acquisition stage, these valence-congruent decisions are going to be correct-hits. For other tones (e.g. 305Hs, 360Hz, etc.) these are going to be false alarms. 
 
-The next step is critical for formatting the data: to determine whether the decision matches the nearest valence. For the tones that were in the acquisition stage, this is going to give an estimate of accuracy. For other tones, this is going to tell us whether subjects were confusing novel tones with their valenced neighbors--basically, making errors. 
+This will be termed the <b>match</b> or congruence between decision and the reference valence. 
 
 ```{r}
 
@@ -163,12 +120,10 @@ generalization_data$match = as.character(generalization_data$valence) == as.char
 
 ```
 
-### Confirmatory analysis
-
 To perform our primary confirmatory test, we will restrict our analysis to include the following information: 
 
   1) generalization trials
-  2) 'positive' or 'negative' valenced tones (not controls)
+  2) positive or negative valenced tones (not controls)
   3) distance of this tone to tones in the acquisition stage (0, 5, 20, 60, or 100Hz)
 
 ```{r}
@@ -180,7 +135,12 @@ hypothesis_space = generalization_data %>%
 
 ```
 
-Main experimental test, looking for the interaction between distance and valence, predicting the response association (positive or negative) 
+
+# Confirmatory analysis
+
+## Primary test for replication
+
+Looking for the interaction between distance and valence, predicting the match term:  
 
 ```{r}
 
@@ -188,7 +148,7 @@ summary(lm('match ~ valence * distance', hypothesis_space))
 
 ```
 
-Visualize the relationship between the proportion of errors distance from original tones and valence 
+Valence, distance, and the interaction between the two are significant predictors of subjects responses. This is, at it's face, a replication of the main statistical properties of the original papers. We can visualize the relationship between valence, distance, and subjects responses: 
 
 ```{r}
 
@@ -205,79 +165,129 @@ hypothesis_space %>%
 
 ```
 
+While the statistical test replicated the original findings, the pattern of the data is not consistent with the hypothesis with the original paper. In the original author's terms, subjects seem to be showing wider perceptual generalization for positive valenced tones
+
+# Post-mortem analysis
+
+## Difference between identification accuracies in generalization stage
+
+A surprising possibility, looking at the plot above, is that the overall accuracy of subjects <em>correctly identifying</em> negative and positive tones from the generalization stage is significantly different. We can visualize subject's accuracy and raction times:  
+
+```{r, fig.width=10, fig.height=4}
+
+zero_distance = filter(hypothesis_space, distance==0)
+
+plot.hits = zero_distance %>%  
+  group_by(valence, subject) %>% 
+  summarise(avg_correct_hit = mean(correct)) %>% 
+  ggplot(aes(x=valence, y=avg_correct_hit)) + 
+    geom_jitter(aes(color=valence), width=.01) + 
+    ggtitle("Subject-level accuracy \ntone identification in generalization stage\n")
+
+plot.rts = zero_distance %>% 
+  group_by(valence, subject) %>% 
+  summarise(avg_rt = mean(rt, na.rm = TRUE)) %>% 
+  ggplot(aes(x=valence, y=avg_rt)) + 
+    geom_jitter(aes(color=valence), width=.01) + 
+    ggtitle("Average subject-level reaction times")
+
+plot_grid(plot.hits, plot.rts)
+```
+
+It does not seem that there is a meaningful different in reaction times, but that there may be a difference in accuracies, which we can test more formally: 
+
+```{r}
+
+summary(lm('correct ~ valence ', zero_distance))
+
+```
+
+This significant difference between positive and negative accuracies in the generalization stage, suggests that subjects are perhaps not learning the task.
+
+## Assesing learning during the first acquisition stage
+
+Beyond looking at the accuracy rates above, it is difficult to ask whether subjects are learning the task looking at the generalization data alone. This is, in part, because we expect subjects to make errors in a way that is consistent with the "overgeneralization" claims made by the original authors. To ask whether subjects are learning, then, we can visualize the learning trajectories during the first acquisition stage, averaging over pairs of trials in a way that's consistent with the original papers' visualization: 
 
 ```{r}
 
 data %>% 
-  filter(stage=='acquisition' & valence!='neutral' & i_acquisition_trial<33) %>% 
+  filter(stage=='acquisition' & valence!='neutral' & i_block==0) %>% 
   group_by(i_acquisition_trial, valence) %>% 
-  summarise(m1 = mean(correct), 
-            sem1 = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  mutate(q_trial = ifelse(i_acquisition_trial%%2, i_acquisition_trial-1, i_acquisition_trial)) %>% 
-  group_by(q_trial, valence) %>% 
-  summarise(m2=mean(m1), sem2=mean(sem1)) %>% 
-  ggplot(aes(x=q_trial, y=m2, color=valence)) + 
+  summarise(mean_one = mean(correct), 
+            sem_one = sd(correct)/sqrt(length(correct))) %>% 
+  mutate(combined_trial = ifelse(i_acquisition_trial%%2, i_acquisition_trial-1, i_acquisition_trial)) %>% 
+  group_by(combined_trial, valence) %>% 
+  summarise(mean_two=mean(mean_one), 
+            sem_two=mean(sem_one)) %>% 
+  ggplot(aes(x=combined_trial, y=mean_two, color=valence)) + 
     geom_line(size=1.5) + 
-    geom_errorbar(aes(ymin=m2-sem2, ymax=m2+sem2), size=1) + 
+    geom_errorbar(aes(ymin=mean_two-sem_two, ymax=mean_two+sem_two), size=1) + 
     ggtitle('Learning curves across the first acquisition stage')
 
 ```
 
-```{r}
-
-hypothesis_space %>% 
-  group_by( valence, distance) %>% 
-  summarise(mean_rt = mean(rt, na.rm = TRUE ), 
-            sem = sd(rt, na.rm = TRUE)/sqrt(length(match)),
-            y_lower = mean_rt-sem, 
-            y_upper = mean_rt+sem) %>% 
-  ggplot(aes(x=distance, y=mean_rt, color=valence)) + 
-    geom_line(aes(color=valence), size=1.5) + 
-    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), size=1) + 
-    ggtitle('Distribution of reaction times')
-
-```
-
-
-
-The primary question this replication hopes to address is "Are the slopes between the positive and negative key responses different?" Using an ANOVA this can be modeled as <b>`p(response) ~ distance * valence_type`</b>, where we expect the interaction term `distance * valence_type` to be significant. We also, expect the slope for the negative valence term to be less than the postive valence, signifying "wider generalization". 
-
-In this small sample (n=2), we replicate the interaction between the valence and distance. 
-
-### Visualization summary statistics and engagement
-
-Visualize summary statistics for each of the 2 subjects in pilot B, as well as some quick checks on their engagement: 
+We can also look at the average accuracy across all subjects: 
 
 ```{r}
 
-criterion = .75
-
-acq_acc = data %>% 
+data %>% 
   filter(stage=='acquisition' & valence!='control') %>% 
   group_by(subject) %>% 
-  summarise(acc=mean(correct)) %>% 
-  mutate(attending = acc>criterion)
-
-gen_acc = data %>% 
-  filter(stage=='generalization', distance==0) %>% 
-  group_by(subject) %>% 
-  summarise(acc=mean(correct)) %>% 
-  mutate(attending = acc>0)
-
-summary =  data.frame(subject=gen_acc$subject, 
-           acquisition_accuracy=acq_acc$acc, 
-           generalization_accuracy=gen_acc$acc, 
-           attending = as.factor(gen_acc$attending * acq_acc$attending))
-
-ggplot(summary, aes(x=acquisition_accuracy, y=generalization_accuracy, color=attending)) + 
-  geom_point(size=3) + 
-  ggtitle('Selecting subjects who performed well in the acquisition stage (acc>.75%) ')
+  summarise(accuracy=mean(correct)) %>% 
+  summarise(mean=mean(accuracy))
 
 ```
 
+In the original study, subjects were significantly above chance within two trials. While subjects do achieve near-ceiling performance, they appear to take longer. 
+
+## Identifying high-performing subjects from acquistiion data
+
+For the current experiment, it's critical that subjects are not "extinguishing" the tone-valence associations learned in the acquisition stage. The acquisition stages are repeated, in large part, to protect against extinction that occurs when tone are repeatedly presented with no feedback in the generalization stage. 
+
+Here we visualize each subject's average acquisition accuracy, accross all blocks, identifying those subjects who averaged above 75%. We expect, given the logic above, that subjects with low accuracy across all blocks will not show the behavioral effects that are central to the current study. We also expect that subjects who are consistently performing well in the acquisition stage should also perform well in the generalization stage--though this is not expected to be a direct relationship, as increased learning in the acquistion stage may lead to increased "generalization", which decreases accuracy. 
+
 ```{r}
 
-attention_check = filter(summary, attending==1)
+# set a relatively liberal threshhold
+criterion = .75
+
+# acquisition
+acquisition_accuracy = data %>% 
+  filter(stage=='acquisition' & valence!='control') %>% 
+  group_by(subject) %>% 
+  summarise(accuracy=mean(correct)) %>% 
+  mutate(attending = accuracy>criterion)
+
+generalization_accuracy = data %>% 
+  filter(stage=='generalization', distance==0) %>% 
+  group_by(subject) %>% 
+  summarise(accuracy=mean(correct)) %>% 
+  mutate(attending = accuracy>0)
+
+learning_summary = data.frame(subject=generalization_accuracy$subject, 
+          acquisition = acquisition_accuracy$accuracy, 
+          generalization =generalization_accuracy$accuracy, 
+          perform_well = as.factor(generalization_accuracy$attending * acquisition_accuracy$attending))
+
+ggplot(learning_summary, aes(x=acquisition, y=generalization, color=perform_well)) + 
+  geom_point(size=3) + 
+  ggtitle('Selecting subjects who performed well in the acquisition stage\n accuracy >.75% ')
+
+```
+
+We can identify those subjects who seem to be consistently engage during the acquistion stages: 
+
+```{r}
+
+attention_check = filter(learning_summary, perform_well==1)
+
+```
+
+### Repeating the main analysis only for those subjects who performed well in the acquisition stage
+
+We can now isolate our analysis to include only these subjects with relatively high accuracies during the acquisition stage
+
+```{r}
 
 hypothesis_space %>% 
   filter(subject %in% attention_check$subject) %>% 
@@ -293,6 +303,7 @@ hypothesis_space %>%
 
 ```
 
+
 ```{r}
 
 attention_checked_hypothesis = filter(hypothesis_space, subject %in% attention_check$subject)
@@ -300,68 +311,107 @@ summary(lm('match ~ valence * distance', attention_checked_hypothesis))
 
 ```
 
+We see that the interaction term here is still significant, even with the smaller sample. And, qualitative, the pattern of data in the plot above looks more consistent with the original findings--if much less pronounced.
+
+## Is tone discrimination symmetric? 
+
+The assignment of tone with positive and negative valence was randomized in this experiment. This is an online experiment, and the stimulus presentation is much less controlled than in an online setting, so it may be that certain tones are more or less discriminable--e.g. do to background noise or speaker quality. We can ask whether subjects were better are tone discriminations, independent of valence assignment. 
+
+### Analysis across all subjects
+
+First, we extract the tone data of interest
+
 ```{r}
 
 tone_data = generalization_data %>%
   filter(is.finite(distance)  & stage=='generalization') %>% 
   mutate(reference_tone = tone - distance, 
          abs_distance = abs(distance), 
-         abs_log_tone_over_ref = abs(log(tone/reference_tone)), 
+         log_ratio = (log(tone/reference_tone)), 
+         abs_log_ratio = abs(log(tone/reference_tone)), 
          reference_tone = as.factor(reference_tone))
 
 ```
 
-```{r}
+Then plot for different distances, average percent correct--e.g., the degree to which subjects identified the tone as novel. 
 
-tone_data %>% 
-  group_by(abs_distance, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct), 
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+```{r, fig.height=7, fig.width=7}
+
+show_tone_accuracies = function(performance_group) {
+  
+  if (performance_group=='all') {
+    which_subjects = learning_summary[['subject']]
+  } else if (performance_group=='high') {
+     which_subjects = filter(learning_summary, perform_well==1)[['subject']]
+  } else if (performance_group=='low') {
+    which_subjects = filter(learning_summary, perform_well==0)[['subject']]
+  }
+  
+  plot.abs_distance = tone_data %>% 
+    filter(subject %in% which_subjects) %>% 
+    group_by(abs_distance, reference_tone) %>% 
+    filter(reference_tone==reference_tone) %>% 
+    summarise(avg_correct = mean(correct), 
+              sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+    ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
+    geom_line(size=1.5) + 
+    geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem), size=1) + 
+    theme(legend.position = c(.4, .2)) + 
+    ggtitle("correct responses \n sorted by absolute value distance")
+  
+  plot.relative_distance = tone_data %>% 
+    filter(subject %in% which_subjects) %>% 
+    group_by(distance, reference_tone) %>% 
+    filter(reference_tone==reference_tone) %>% 
+    summarise(avg_correct = mean(correct),
+              sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+    ggplot(aes(x=distance, y=avg_correct, color=reference_tone)) + 
+    geom_line(size=1.5) + 
+    geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem), size=1) + 
+    theme(legend.position="none") + 
+    ggtitle("correct responses \n sorted by relative distance")
+  
+  plot.log_ratio = tone_data %>% 
+    filter(subject %in% which_subjects) %>% 
+    group_by(log_ratio, reference_tone) %>% 
+    filter(reference_tone==reference_tone) %>% 
+    summarise(avg_correct = mean(correct),
+              sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+    ggplot(aes(x=log_ratio, y=avg_correct, color=reference_tone)) + 
+    geom_line(size=1.5) + theme(legend.position="none") + 
+    geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem), size=1) + 
+    ggtitle("correct responses \n sorted by abs(log(tone/reference))")
+  
+  plot.abs_log_ratio = tone_data %>% 
+    filter(subject %in% which_subjects) %>% 
+    group_by(abs_log_ratio, reference_tone) %>% 
+    filter(reference_tone==reference_tone) %>% 
+    summarise(avg_correct = mean(correct),
+              sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
+    ggplot(aes(x=abs_log_ratio, y=avg_correct, color=reference_tone)) + 
+    geom_line(size=1.5) +   theme(legend.position="none") + 
+    geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem), size=1) + 
+    ggtitle("correct responses \n sorted by abs(log(tone/reference))")
+  
+  plot_grid(plot.abs_distance, plot.relative_distance, plot.log_ratio,  plot.abs_log_ratio)
+}
+
+show_tone_accuracies('all')
+```
+
+It appears that tones around 700Hz are easier to discriminate than tones areound 300Hz. We can test this more formally: 
+
+```{r}
 
 summary(lm('correct ~ abs(distance) + reference_tone', tone_data))
 
 ```
 
+The reference tone here is a significant predictor of accuracy. What seems to be driving this effect is the difference in accuracy for the tones <em>below</em> the reference tones--in this case, tones around 200Hz are less accurately judged than tones around 600Hz, even though they are the same distance from the reference tones. 
 
-```{r}
+### Analysis across high performing subjects
 
-tone_data %>% 
-  filter(subject %in% attention_check$subject ) %>% 
-  group_by(abs_distance, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct), 
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
-
-tone_data %>% 
-  filter(subject %in% attention_check$subject ) %>% 
-  group_by(distance, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct),
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=distance, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
-
-tone_data %>% 
-  filter(subject %in% attention_check$subject ) %>% 
-  group_by(abs_log_tone_over_ref, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct),
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=abs_log_tone_over_ref, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
-
-
-```
-
+We can repeat the analysis above on only those subjects we have previously identified as performing will in the acquisition stages
 
 ```{r}
 
@@ -371,84 +421,26 @@ summary(lm('correct ~ abs(distance) + reference_tone', tone_data_attending))
 
 ```
 
-```{r}
+Restricting the analysis above to high performing subjects, tone is not a significant predictor of accuracy. We can also visualize this 
 
-tone_data %>% 
-  filter(! subject %in% attention_check$subject ) %>% 
-  group_by(abs_distance, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct), 
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=abs_distance, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
+```{r, fig.height=7, fig.width=7}
 
-tone_data %>% 
-  filter(! subject %in% attention_check$subject ) %>% 
-  group_by(distance, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct),
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=distance, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
-
-tone_data %>% 
-  filter(! subject %in% attention_check$subject ) %>% 
-  group_by(abs_log_tone_over_ref, reference_tone) %>% 
-  filter(reference_tone==reference_tone) %>% 
-  summarise(avg_correct = mean(correct),
-            sem = sd(correct, na.rm = TRUE)/sqrt(length(correct))) %>% 
-  ggplot(aes(x=abs_log_tone_over_ref, y=avg_correct, color=reference_tone)) + 
-  geom_line() + 
-  geom_errorbar(aes(ymin=avg_correct-sem, ymax=avg_correct+sem))
-
+show_tone_accuracies('high')
 
 ```
 
-```{r}
+While this wasn't evident in the test above, it still seems as though the tones < 300Hz are less accurate than those tones < 700Hz. 
 
-tone_data_unattending = tone_data[!tone_data$subject %in% attention_check$subject,]
+# Conclusions 
 
-summary(lm('correct ~ abs(distance) + reference_tone', tone_data_unattending))
+With a sample of 20 subjects, the present study successfully reproduced the main statistical findings relevant to our interest, the interaction between valence and distance in prediction subjects behaviors. However, this occured in a way that was inconsistent with the theoretical claims of the original paper. It seems like this is the main effect driving the difference in the positive and negative slopes was that subjects were significantly worse at identifying negative tones than positive tones (p < .0001) in the generalization stage--not an increase in errors surrounding the negative tone. 
 
-```
+A post-mortem analysis determined that the learning trajectories in this population were slower than those in the original study, and that across the entire study, the average performance was well below ceiling (<70%). We then identified several subjects with consistent accuracies above 75% in the acquisition stages. The main hypotheses were tested again in this subset. The interaction between valence and distance was significant, even in this smaller sample (p < .03). The pattern of data, in this case, also seemed more consistent with the main hypothesis; increased "generalization" for the tone around the negative tone. 
 
-```{r}
+Interestingly, there also seemed to be a significant difference between the accuracies of the two tones (700 and 300Hz) in the generalization stage (p < .01). This is a concern because it suggests that subjects may simply not be able to hear some tones as well as others. When only those subjects who performed well were tested, however, this effect of tone on accuracy was no longer significant (p > .4). That is, for those subjects who performed well, there was no difference in accuracy between 300 and 700Hz tones.
 
-data %>% 
-  filter(stage=='acquisition'&condition=='instrumental'&i_block==0)%>%
-  mutate(correct= as.factor(correct)) %>% 
-  group_by(valence, condition, correct) %>% 
-  summarise(mean_rt = mean(rt, na.rm = TRUE ), 
-            sem = sd(rt, na.rm = TRUE)) %>% 
-  ggplot(aes(x=valence, y=mean_rt, color=correct)) + 
-    geom_point(size=5) + 
-    geom_errorbar(aes(ymin=mean_rt-sem, ymax=mean_rt+sem, width=.2)) + 
-    ggtitle('Average response time during the first acquisition stage')
+Together, these results are promising, but stil only suggestive. Critically, subjects performance in the acquisition stage was slow and still below ceiling. The centrality of learning in this stage, to any form of perceptual generalization, raise concerns about the currect implimentation. A fair test of the authors original claims, within an online sample, will ultimately demand more stringent checks on subjects performance. 
 
-```
-
-```{r}
-
-attention_check = filter(summary, attending==1)
-
-hypothesis_space %>% 
-  mutate(hand_type = ifelse(positive_key==80, 'pos_right', 'pos_left')) %>% 
-  filter(subject %in% attention_check$subject) %>% 
-  group_by( valence, distance, subject) %>% 
-  summarise(p_association = mean(match, na.rm = TRUE ), 
-            sem = sd(match, na.rm = TRUE)/sqrt(length(match)),
-            y_lower = p_association-sem, 
-            y_upper = p_association+sem) %>% 
-  ggplot(aes(x=distance, y=p_association, color=valence)) + 
-    geom_line(aes(color=valence), size=1) + 
-    geom_errorbar(aes(ymin=y_lower, ymax=y_upper), width=2) + 
-    ggtitle("Only subjects who passed a post-mortem attention check") + 
-    facet_grid(rows=vars(subject)) + 
-    theme(plot.title = element_text(size = 10))
-
-```
+In future studies, I plan to exclude subjects who don't perform at the same level of the original paper in each acquisition stage (>90%). That is, after each acquistion stage, if a subject is not performing at a level consistent with a fully attending subject in the lab, the experiment will end and they' will be given the bonus they've earned. This will allow us to generously compensate workers who are fully engaged, and not further compensate workers who are not performing well. 
 
 
-#### Notes

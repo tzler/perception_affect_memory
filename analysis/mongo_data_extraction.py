@@ -20,8 +20,10 @@ def identify_workers(collection):
 
     # the second is my worker id
     exclude = ['NONE', 'A33F2FVAMGJDGG']
-    all_workers = [i for i in collection.distinct('worker_id') if i not in exclude]
+    all_workers = [i for i in collection.find({'iteration_name':'pilot_3'}).distinct('worker_id') if i not in exclude]
     # extract workers who've completed entire experiment -- not returned HIT early
+    
+    
     complete = [] 
     for i_worker in all_workers: 
         tmp_data = collection.find({'worker_id':i_worker})
@@ -31,7 +33,7 @@ def identify_workers(collection):
     return complete
     
 def extract_data(): 
-    
+
     # connect with mongo
     collection = connect_to_database() 
     # identify workers who completed experiment
@@ -42,7 +44,6 @@ def extract_data():
     subject_trial_data = pandas.DataFrame()
     # iterate over workers 
     for i_worker in worker_ids: 
-
         # extract worker's data from mongo database
         i_data = collection.find({'worker_id':i_worker})
         # extract trial data
@@ -58,6 +59,24 @@ def extract_data():
   
 # extract and format data from database
 data = extract_data()
-  
+
+# NEXT TIME SAVE THE VALENCE OF EACH KEY PRESS TYLER! 
+data['positive_key'] = np.nan
+data['negative_key'] = np.nan
+data['association'] = np.nan
+
+mapping = {'p':80, 'q':81, 'space':32}
+
+for i_subject in data.subject.unique(): 
+    
+    for i_valence in ['positive', 'negative']: 
+        
+        conditions = (data.subject==i_subject) * (data.valence==i_valence) * (data.condition=='instrumental')
+        # get the key valeu and map it to the numerical value
+        i_key = mapping[np.unique(data[conditions]['correct_response'])[0]]
+        
+        # update subject valence-key mapping 
+        data['%s_key'%i_valence][data.subject==i_subject] = int(i_key)
+        
 # save for later analysis
 data.to_csv('subject_data.csv')
