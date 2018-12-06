@@ -9,7 +9,7 @@ output:
     toc_float:
       collapsed: false
 ---
-- [Project repository](https://github.com/tzler/experimental_methods/tree/master/schechtman2010)
+- [Project repository](https://github.com/tzler/sleep_affect_memory)
 - [Original Paper](https://github.com/tzler/experimental_methods/blob/master/schechtman2010/original_paper.pdf)
 - [Demo (very few trials)](http://web.stanford.edu/~bonnen/auditory/experiment/demo.html)
 - [Full experiment](http://web.stanford.edu/~bonnen/auditory/experiment/index.html)
@@ -41,11 +41,11 @@ The are two main trail types in the acquisitino stage, instrumental and pavlovia
 
 For the pavlovian trials, subjects are first presented with the word "helpless" at the center of the screen. Then, either a positive or negative auditory tone is played. There is nothing subjects can do to change the outcome, and key presses will not end the trial (as is the case in the instrumental trials). 
 
-After all trials, subjects receive feedback, displayed at the center of the screen for 1000ms. For the positive and negative tones this is in the form of a monetary value (e.g. `+$0.02`, `-$0.02`, `-$0.00`, or `+$0.00`). For the neutral tone, the screen goes blank. At the end of each acquisition stage, subjects are given feedback about the aggregate bonus accrued in that stage. 
+After all trials, subjects receive feedback, displayed at the center of the screen for 1000ms. For the positive and negative tones this is in the form of a monetary value (e.g. `+$0.04`, `-$0.04`, `-$0.00`, or `+$0.00`). For the neutral tone, the screen goes blank. At the end of each acquisition stage, subjects are given feedback about the aggregate bonus accrued in that stage. 
 
 #### Generalization stage: 
 
-Subjects are presented with the original three tones, as well as range of tones similar to the positive and negative tones (300 | 700 ± 5, 20, 60, and 100 Hz). There are also tones very dissimilar to those in the acquisition stage (480, 500, 520, 880, 900, or 920Hz). If the tone presented is either the original positive or negative tone in the acquisition stage, subjects are instructed to press the key that corresponded to that tone (`p` or `q`). Otherwise, they are instructed to press a third key (`spacebar`). Subjects are asked to respond within 2500ms and are rewarded for correct response within this time, though no feedback is given. If subjects do not respond within the alotted time, they are penalized, and given feedback and told that they will be heavily penalized (`-$0.20 RESPOND FASTER` presented at the center of the screen). This amount will actually not be taken out of subjects total bonus.  
+Subjects are presented with the original three tones, as well as range of tones similar to the positive and negative tones (300 | 700 ± 5, 20, 60, and 100 Hz). There are also tones very dissimilar to those in the acquisition stage (480, 500, 520, 880, 900, or 920Hz). If the tone presented is either the original positive or negative tone in the acquisition stage, subjects are instructed to press the key that corresponded to that tone (`p` or `q`). Otherwise, they are instructed to press a third key (`spacebar`). Subjects are asked to respond within 2500ms and are rewarded for correct response within this time, though no feedback is given. If subjects do not respond within the alotted time, they are penalized, and given feedback and told that they will be heavily penalized (`-$0.40 RESPOND FASTER` presented at the center of the screen). This amount will actually not be taken out of subjects total bonus.  
 
 The acquisition and generalization stages are repeated until subjects have gone through three acquisition-generalization cycles. 
 
