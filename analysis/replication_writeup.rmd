@@ -10,6 +10,8 @@ output:
       collapsed: false
 ---
 - [Project repository](https://github.com/tzler/sleep_affect_memory)
+- [Implementation scripts ](https://github.com/tzler/sleep_affect_memory/tree/master/experiment)
+- [Analysis scripts ](https://github.com/tzler/sleep_affect_memory/tree/master/analysis)
 - [Original Paper](https://github.com/tzler/experimental_methods/blob/master/schechtman2010/original_paper.pdf)
 - [Demo (very few trials)](http://web.stanford.edu/~bonnen/auditory/experiment/demo.html)
 - [Full experiment](http://web.stanford.edu/~bonnen/auditory/experiment/index.html)
@@ -19,7 +21,6 @@ library(reticulate)
 library(ggplot2)
 library(plyr)
 library(dplyr)
-#library(gridExtra)
 library(cowplot)
 ```
 
